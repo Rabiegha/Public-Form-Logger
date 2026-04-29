@@ -7,7 +7,7 @@
   <div>
     <h2>Log <span class="mono small">#<%= log.id %></span></h2>
     <div class="muted small">
-      Reçu le <%= new Date(log.createdAt).toLocaleString('fr-FR') %>
+      Reçu le <%= new Date(log.createdAt).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) %>
     </div>
     <div class="muted small">
       Événement : <strong><%= eventName || 'Sans nom' %></strong>

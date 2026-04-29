@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Public Form Logger — Roadmap V2</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #6366f1;
+      --primary-dark: #4338ca;
+      --border: #e2e8f0;
+      --code-bg: #1e293b;
+      --code-text: #e2e8f0;
+      --warn: #d97706;
+      --warn-bg: #fef3c7;
+      --info-bg: #ede9fe;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+      --danger-bg: #fee2e2;
+      --danger: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+    }
+    .container { max-width: 920px; margin: 0 auto; padding: 48px 24px; }
+    header.doc-header {
+      border-bottom: 3px solid var(--primary);
+      padding-bottom: 20px;
+      margin-bottom: 32px;
+    }
+    header.doc-header h1 { margin: 0 0 6px; font-size: 34px; }
+    header.doc-header .subtitle { color: var(--muted); font-size: 16px; }
+    h2 {
+      margin-top: 48px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      font-size: 24px;
+    }
+    h2 .num {
+      display: inline-block;
+      width: 36px;
+      height: 36px;
+      line-height: 36px;
+      text-align: center;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-size: 15px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+    h3 { margin-top: 22px; font-size: 16px; color: var(--primary-dark); text-transform: uppercase; letter-spacing: 0.5px; }
+    code, pre {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+    }
+    code:not(pre code) {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 14px 18px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    pre code { background: transparent; padding: 0; color: inherit; }
+    ul, ol { padding-left: 22px; }
+    li { margin: 4px 0; }
+    .callout {
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 16px 0;
+      border-left: 4px solid var(--primary);
+      background: var(--info-bg);
+    }
+    .callout.warn { border-left-color: var(--warn); background: var(--warn-bg); }
+    .callout.danger { border-left-color: var(--danger); background: var(--danger-bg); }
+    .callout.success { border-left-color: var(--success); background: var(--success-bg); }
+    .callout strong { display: block; margin-bottom: 4px; }
+    .toc {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px 24px;
+      margin-bottom: 32px;
+    }
+    .toc h3 { margin: 0 0 12px; color: var(--text); font-size: 13px; }
+    .toc ol { margin: 0; }
+    .toc a { color: var(--primary-dark); text-decoration: none; font-weight: 500; }
+    .toc a:hover { text-decoration: underline; }
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin: 16px 0;
+    }
+    .panel {
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: white;
+    }
+    .panel.problem { border-left: 4px solid var(--danger); }
+    .panel.solution { border-left: 4px solid var(--success); }
+    .panel h4 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .panel.problem h4 { color: var(--danger); }
+    .panel.solution h4 { color: var(--success); }
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 12px;
+      vertical-align: middle;
+    }
+    .badge.priority-high { background: var(--danger-bg); color: var(--danger); }
+    .badge.priority-med { background: var(--warn-bg); color: var(--warn); }
+    .badge.priority-low { background: #e0e7ff; color: var(--primary-dark); }
+    .vision {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: white;
+      padding: 24px 28px;
+      border-radius: 12px;
+      margin: 24px 0 32px;
+    }
+    .vision .arrow { font-size: 22px; margin: 8px 0; opacity: 0.8; }
+    .vision .from { opacity: 0.7; font-size: 14px; }
+    .vision .to { font-size: 18px; font-weight: 600; }
+    @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="doc-header">
+      <h1>Public Form Logger — Roadmap V2</h1>
+      <div class="subtitle">Document de cadrage · à challenger et prioriser avant implémentation</div>
+    </header>
+
+    <h2 style="border: none; padding: 0; margin-top: 0;">Contexte</h2>
+    <p>
+      La V1 du Public Form Logger est volontairement <strong>simple</strong> : service indépendant,
+      stockage des soumissions en base, rôle de filet de sécurité (best-effort), admin panel basique.
+      Elle remplit son objectif initial — ne plus perdre de leads quand Attendee est indisponible —
+      mais plusieurs limites apparaissent à l'usage.
+    </p>
+
+    <h3>Limites actuelles de la V1</h3>
+    <ul>
+      <li>Pas d'intégration avec Attendee (auth admin séparée)</li>
+      <li>Aucune garantie d'origine des requêtes (risque de spam)</li>
+      <li>Pas de mécanisme de replay automatique des leads non synchronisés</li>
+      <li>Observabilité limitée (pas d'alerting structuré)</li>
+      <li>Protection anti-spam basique (rate limit IP uniquement)</li>
+      <li>Expérience admin minimale (UI fonctionnelle mais sobre)</li>
+      <li>Pas de distinction entre temps client et serveur (pas de <code>receivedAt</code>)</li>
+      <li>Dépendance forte à la disponibilité de la DB (pas de fallback ni retry serveur)</li>
+    </ul>
+
+    <div class="vision">
+      <div class="from">Objectif : faire évoluer le Logger…</div>
+      <div class="arrow">↓</div>
+      <div>de <code style="background: rgba(255,255,255,0.2); color: white;">simple backup passif</code></div>
+      <div class="arrow">↓</div>
+      <div class="to">vers un système actif de sécurisation, récupération et monitoring des leads</div>
+    </div>
+
+    <div class="toc">
+      <h3>Sommaire des chantiers V2</h3>
+      <ol>
+        <li><a href="#a1">Intégration Attendee — auth unifiée</a></li>
+        <li><a href="#a2">Signature des requêtes — sécurité avancée</a></li>
+        <li><a href="#a3">Migration vers une base managée</a></li>
+        <li><a href="#a4">Replay automatique des leads non synchronisés</a></li>
+        <li><a href="#a5">Observabilité &amp; alerting</a></li>
+        <li><a href="#a6">Anti-spam avancé</a></li>
+        <li><a href="#a7">Amélioration UX admin</a></li>
+        <li><a href="#a8">Champ <code>receivedAt</code> côté client</a></li>
+        <li><a href="#a9">Gestion avancée des pannes DB</a></li>
+        <li><a href="#open">Open questions</a></li>
+        <li><a href="#concl">Conclusion</a></li>
+      </ol>
+    </div>
+
+    <!-- ================= 1 ================= -->
+    <h2 id="a1"><span class="num">1</span>Intégration Attendee — auth unifiée
+      <span class="badge priority-high">priorité haute</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>Auth admin séparée d'Attendee</li>
+          <li>Duplication des comptes utilisateurs</li>
+          <li>Mauvaise UX interne (double login)</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2</h4>
+        <ul>
+          <li>Auth via JWT Attendee (validation côté Logger via clé publique ou shared secret)</li>
+          <li>Permissions fines (ex. <code>public_form_logs.read</code>)</li>
+          <li><strong>Fallback admin local obligatoire</strong> si Attendee est down</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout warn">
+      <strong>Contrainte non-négociable</strong>
+      Le Logger doit rester pleinement fonctionnel même si Attendee est indisponible.
+    </div>
+
+    <!-- ================= 2 ================= -->
+    <h2 id="a2"><span class="num">2</span>Signature des requêtes — sécurité avancée
+      <span class="badge priority-high">priorité haute</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>Endpoint public exposé sans signature</li>
+          <li>Aucune garantie que les requêtes viennent de nos landing pages</li>
+          <li>Spam possible avec un simple <code>curl</code></li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2</h4>
+        <ul>
+          <li>Signature HMAC des requêtes (générée backend, jamais front)</li>
+          <li>Champs signés : <code>public_token</code>, <code>submission_id</code>, <code>timestamp</code></li>
+          <li>Vérification côté Logger avant insertion</li>
+          <li>Bénéfices : protection anti-spam, intégrité, contrôle des sources</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ================= 3 ================= -->
+    <h2 id="a3"><span class="num">3</span>Migration vers une base managée
+      <span class="badge priority-med">priorité moyenne</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>Backups gérés manuellement</li>
+          <li>Risque de perte de données</li>
+          <li>Maintenance infrastructure récurrente</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2 — candidates</h4>
+        <ul>
+          <li>Supabase</li>
+          <li>Neon</li>
+          <li>AWS RDS</li>
+          <li>Cloud SQL (GCP)</li>
+        </ul>
+      </div>
+    </div>
+    <p><strong>Bénéfices</strong> : backups automatiques, haute disponibilité, charge ops réduite.</p>
+
+    <!-- ================= 4 ================= -->
+    <h2 id="a4"><span class="num">4</span>Replay automatique des leads
+      <span class="badge priority-high">priorité haute</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>Si Attendee échoue, le rattrapage est 100 % manuel</li>
+          <li>Risque d'oubli ou de retard sur des leads chauds</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2</h4>
+        <ul>
+          <li>Détection automatique des logs non synchronisés avec Attendee</li>
+          <li>Retry périodique (worker / cron)</li>
+          <li>Replay manuel disponible depuis l'admin</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3>Nouveau modèle de statut</h3>
+    <pre><code>received   → soumission insérée dans le Logger
+synced     → confirmée comme présente dans Attendee
+failed     → Attendee a refusé après N retries (à investiguer)</code></pre>
+
+    <div class="callout success">
+      <strong>Promesse V2</strong>
+      Zéro perte de leads — recovery automatisée bout en bout.
+    </div>
+
+    <!-- ================= 5 ================= -->
+    <h2 id="a5"><span class="num">5</span>Observabilité &amp; alerting
+      <span class="badge priority-med">priorité moyenne</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>Visibilité limitée sur le trafic et les erreurs</li>
+          <li>Aucun alerting proactif</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2</h4>
+        <ul>
+          <li>Alerting si volume de logs anormalement bas (ex. 0 logs / 1h pendant un événement actif)</li>
+          <li>Dashboard métriques (latences, taux d'erreur, throughput)</li>
+          <li>Logs structurés JSON</li>
+          <li>Intégration Sentry, Datadog ou équivalent</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ================= 6 ================= -->
+    <h2 id="a6"><span class="num">6</span>Anti-spam avancé
+      <span class="badge priority-med">priorité moyenne</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>Rate limit IP simple, contournable</li>
+          <li>Pas de détection comportementale</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2</h4>
+        <ul>
+          <li>Honeypot fields côté landing (déjà préconisé en V1, à formaliser)</li>
+          <li>Détection de patterns (payloads identiques, fréquence anormale)</li>
+          <li>Blocage IP / pays / ASN</li>
+          <li>Rate limiting dynamique selon score de confiance</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ================= 7 ================= -->
+    <h2 id="a7"><span class="num">7</span>Amélioration UX admin
+      <span class="badge priority-low">priorité basse</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>UI fonctionnelle mais minimale</li>
+          <li>Pas de filtres avancés ni de recherche full-text</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2</h4>
+        <ul>
+          <li>Export CSV / Excel ✅ <em>(déjà livré en V1.x)</em></li>
+          <li>Filtres avancés (date, événement, statut sync, UTM)</li>
+          <li>Recherche full-text dans le payload</li>
+          <li>Dashboard simple (volumes, événements actifs)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ================= 8 ================= -->
+    <h2 id="a8"><span class="num">8</span>Champ <code>receivedAt</code> côté client
+      <span class="badge priority-low">priorité basse</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Problème V1</h4>
+        <ul>
+          <li>Impossible de distinguer le temps client du temps serveur</li>
+          <li>Difficile de mesurer la latence réseau / d'analyser des bugs UI</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Solution V2</h4>
+        <ul>
+          <li><code>createdAt</code> → timestamp serveur (source de vérité)</li>
+          <li><code>receivedAt</code> → timestamp client (optionnel, debug)</li>
+        </ul>
+      </div>
+    </div>
+    <h3>Règles d'usage</h3>
+    <ul>
+      <li>Champ optionnel — fallback sur <code>createdAt</code> si absent</li>
+      <li>Ne jamais faire confiance à 100 % au temps client (manipulable)</li>
+      <li><code>createdAt</code> reste la source de vérité légale et métier</li>
+    </ul>
+
+    <!-- ================= 9 ================= -->
+    <h2 id="a9"><span class="num">9</span>Gestion avancée des pannes DB
+      <span class="badge priority-low">à explorer</span></h2>
+    <div class="grid-2">
+      <div class="panel problem">
+        <h4>Décision V1 (conservée)</h4>
+        <ul>
+          <li>Si DB down → renvoyer <code>503</code></li>
+          <li>Le frontend retry avec backoff (responsabilité côté UI)</li>
+        </ul>
+      </div>
+      <div class="panel solution">
+        <h4>Réflexion V2</h4>
+        <ul>
+          <li>Option à explorer : fallback stockage temporaire (file / queue locale)</li>
+          <li>Permettrait d'absorber des pannes DB courtes sans perte</li>
+        </ul>
+      </div>
+    </div>
+    <div class="callout danger">
+      <strong>Attention — risques</strong>
+      Complexité élevée, risque de corruption, nouveau point de défaillance.
+      Décision actuelle : <strong>rester sur l'approche simple</strong> et investir plutôt dans le replay
+      automatique (§4) et l'observabilité (§5).
+    </div>
+
+    <!-- ================= Open questions ================= -->
+    <h2 id="open"><span class="num">?</span>Open questions à trancher</h2>
+    <ul>
+      <li>Faut-il introduire une queue (Redis / BullMQ) pour le replay et le découplage ?</li>
+      <li>Faut-il un buffer mémoire temporaire pour absorber les micro-pannes DB ?</li>
+      <li>Faut-il un service intermédiaire dédié à la signature des requêtes ?</li>
+      <li>Quel niveau d'intégration Attendee : SSO complet ou simple validation JWT ?</li>
+      <li>Quel curseur sécurité / complexité accepter (trade-off ROI) ?</li>
+      <li>La signature côté backend implique-t-elle un proxy par landing ? Quel impact ops ?</li>
+    </ul>
+
+    <!-- ================= Conclusion ================= -->
+    <h2 id="concl"><span class="num">✓</span>Conclusion</h2>
+    <p>
+      La V2 ne doit pas être une simple évolution technique, mais un <strong>changement de
+      posture</strong> :
+    </p>
+    <pre><code>V1 → stockage passif (best-effort)
+V2 → système actif, sécurisé, observable et résilient</code></pre>
+    <p>Ce document est une <strong>base de réflexion</strong>. Avant toute implémentation, il devra être :</p>
+    <ul>
+      <li><strong>Revu</strong> avec l'équipe technique et produit</li>
+      <li><strong>Challengé</strong> sur chaque chantier (coût vs valeur)</li>
+      <li><strong>Priorisé</strong> par incréments livrables (pas de big bang)</li>
+    </ul>
+
+    <hr style="margin: 48px 0 24px; border: none; border-top: 1px solid var(--border);" />
+    <p style="text-align: center; color: var(--muted); font-size: 13px;">
+      Public Form Logger · Roadmap V2 · Avril 2026 · <em>document de travail</em>
+    </p>
+  </div>
+</body>
+</html>

@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Public Form Logger — Guide d'intégration landing page</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --border: #e2e8f0;
+      --code-bg: #1e293b;
+      --code-text: #e2e8f0;
+      --warn: #d97706;
+      --warn-bg: #fef3c7;
+      --info-bg: #dbeafe;
+      --success: #16a34a;
+      --success-bg: #dcfce7;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    .container { max-width: 880px; margin: 0 auto; padding: 48px 24px; }
+    header.doc-header {
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+    header.doc-header h1 { margin: 0 0 6px; font-size: 32px; }
+    header.doc-header .meta { color: var(--muted); font-size: 14px; }
+    h2 {
+      margin-top: 40px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 22px;
+    }
+    h3 { margin-top: 28px; font-size: 17px; color: var(--primary); }
+    code, pre {
+      font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+      font-size: 13px;
+    }
+    code:not(pre code) {
+      background: #e2e8f0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 16px 18px;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 12px 0;
+    }
+    pre code { background: transparent; padding: 0; color: inherit; font-size: 13px; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+    th, td { padding: 10px 12px; border: 1px solid var(--border); text-align: left; vertical-align: top; }
+    th { background: #f1f5f9; font-weight: 600; }
+    .callout {
+      padding: 14px 18px;
+      border-radius: 8px;
+      margin: 16px 0;
+      border-left: 4px solid var(--primary);
+      background: var(--info-bg);
+    }
+    .callout.warn { border-left-color: var(--warn); background: var(--warn-bg); }
+    .callout.success { border-left-color: var(--success); background: var(--success-bg); }
+    .callout strong { display: block; margin-bottom: 4px; }
+    ul, ol { padding-left: 22px; }
+    .toc {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 32px;
+    }
+    .toc h3 { margin: 0 0 8px; color: var(--text); font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .toc ol { margin: 0; }
+    .toc a { color: var(--primary); text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: 4px;
+      background: #e2e8f0;
+      color: var(--muted);
+      vertical-align: middle;
+    }
+    .badge.required { background: #fee2e2; color: #dc2626; }
+    .badge.optional { background: #dbeafe; color: #1e40af; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="doc-header">
+      <h1>Public Form Logger — Guide d'intégration</h1>
+      <div class="meta">À destination des développeurs front · Landing pages · v1.0</div>
+    </header>
+
+    <div class="callout">
+      <strong>En une phrase</strong>
+      Chaque soumission de formulaire d'une landing doit faire un <code>POST</code> vers le Logger.
+      C'est un <strong>filet de sécurité</strong> : si Attendee est down, le lead est sauvé en base et rejouable.
+    </div>
+
+    <div class="toc">
+      <h3>Sommaire</h3>
+      <ol>
+        <li><a href="#archi">Architecture</a></li>
+        <li><a href="#endpoint">Endpoint</a></li>
+        <li><a href="#payload">Format de payload</a></li>
+        <li><a href="#statuts">Codes de réponse</a></li>
+        <li><a href="#idempotence">Idempotence (submission_id)</a></li>
+        <li><a href="#retry">Stratégie de retry</a></li>
+        <li><a href="#cors">CORS &amp; domaines autorisés</a></li>
+        <li><a href="#exemple">Exemple complet (HTML + JS vanilla)</a></li>
+        <li><a href="#checklist">Checklist d'intégration</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ol>
+    </div>
+
+    <h2 id="archi">1. Architecture</h2>
+    <p>
+      Le Logger est un service indépendant qui reçoit, valide et stocke chaque soumission de
+      formulaire émise par une landing page <strong>en parallèle</strong> de l'API Attendee
+      principale. Il n'a aucune logique métier : il <em>logge</em>.
+    </p>
+    <pre><code>[ Landing page ]
+       │
+       ├──► POST /api/event/registration   → Attendee (chemin nominal)
+       │
+       └──► POST /v1/public-form-logs      → Public Form Logger (filet de sécurité)</code></pre>
+    <ul>
+      <li>Les deux requêtes partent <strong>en parallèle</strong> ; aucune n'est bloquante pour l'autre.</li>
+      <li>Un échec côté Logger <strong>ne doit jamais</strong> empêcher l'inscription effective côté Attendee.</li>
+      <li>Un échec côté Attendee est rattrapé manuellement (V1) ou automatiquement (V2) via les logs du Logger.</li>
+    </ul>
+
+    <h2 id="endpoint">2. Endpoint</h2>
+    <table>
+      <tr><th>Méthode</th><td><code>POST</code></td></tr>
+      <tr><th>URL</th><td><code>{API_BASE}/v1/public-form-logs</code></td></tr>
+      <tr><th>Content-Type</th><td><code>application/json</code></td></tr>
+      <tr><th>Auth</th><td>Aucune (endpoint public)</td></tr>
+    </table>
+    <p><strong>Bases d'URL</strong> :</p>
+    <ul>
+      <li>Local Docker : <code>http://localhost:4001</code></li>
+      <li>Production : <code>https://logger.attendee.fr</code> <span class="badge">à confirmer</span></li>
+    </ul>
+
+    <h2 id="payload">3. Format de payload</h2>
+    <pre><code>{
+  "public_token": "96be0d69-bfaf-4e34-9255-f5a0bbeee5ec",
+  "submission_id": "550e8400-e29b-41d4-a716-446655440000",
+  "form_payload": {
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "email": "jean.dupont@example.com",
+    "phone": "+33612345678",
+    "company": "ACME",
+    "jobTitle": "CTO"
+  },
+  "landing_page_url": "https://event.choyou.fr/inscription",
+  "utm_source": "linkedin",
+  "utm_medium": "post",
+  "utm_campaign": "spring-2026"
+}</code></pre>
+
+    <table>
+      <tr><th>Champ</th><th>Type</th><th>Statut</th><th>Description</th></tr>
+      <tr>
+        <td><code>public_token</code></td><td>string</td>
+        <td><span class="badge required">requis</span></td>
+        <td>Token public de l'événement (8–128 chars, <code>[A-Za-z0-9_-]</code>). Fourni par Attendee.</td>
+      </tr>
+      <tr>
+        <td><code>submission_id</code></td><td>string</td>
+        <td><span class="badge optional">optionnel</span></td>
+        <td>UUID v4 généré côté client. <strong>Recommandé</strong> pour l'idempotence (voir §5).</td>
+      </tr>
+      <tr>
+        <td><code>form_payload</code></td><td>object</td>
+        <td><span class="badge required">requis</span></td>
+        <td>Tous les champs du formulaire. Objet plat. Max 32 KB sérialisé, max 100 clés.</td>
+      </tr>
+      <tr>
+        <td><code>landing_page_url</code></td><td>string (URL)</td>
+        <td><span class="badge optional">optionnel</span></td>
+        <td>URL de la page (utiliser <code>window.location.href</code>).</td>
+      </tr>
+      <tr>
+        <td><code>utm_source</code></td><td>string</td>
+        <td><span class="badge optional">optionnel</span></td>
+        <td>Extrait de <code>?utm_source=…</code> dans l'URL.</td>
+      </tr>
+      <tr>
+        <td><code>utm_medium</code></td><td>string</td>
+        <td><span class="badge optional">optionnel</span></td>
+        <td>idem.</td>
+      </tr>
+      <tr>
+        <td><code>utm_campaign</code></td><td>string</td>
+        <td><span class="badge optional">optionnel</span></td>
+        <td>idem.</td>
+      </tr>
+    </table>
+
+    <div class="callout warn">
+      <strong>Ordre des champs dans <code>form_payload</code></strong>
+      L'admin du Logger affiche les colonnes <strong>dans l'ordre d'insertion des clés</strong>.
+      Construisez le payload dans l'ordre où vous voulez voir les colonnes apparaître côté admin.
+      En pratique, parcourir les <code>&lt;input&gt;</code> dans l'ordre du DOM suffit.
+    </div>
+
+    <h2 id="statuts">4. Codes de réponse</h2>
+    <table>
+      <tr><th>Code</th><th>Sens</th><th>Action côté front</th></tr>
+      <tr>
+        <td><code>201 Created</code></td><td>Log inséré.</td>
+        <td>Afficher le message de succès à l'utilisateur.</td>
+      </tr>
+      <tr>
+        <td><code>200 OK</code></td><td>Duplicate (même <code>submission_id</code>).</td>
+        <td>Considérer comme succès (cas du retry).</td>
+      </tr>
+      <tr>
+        <td><code>400 Bad Request</code></td><td>Payload invalide (token mal formé, payload vide, etc.).</td>
+        <td>Erreur définitive. Ne pas retry.</td>
+      </tr>
+      <tr>
+        <td><code>403 Forbidden</code></td><td>Origine CORS non autorisée.</td>
+        <td>Vérifier que le domaine est listé dans <code>CORS_ORIGINS</code> côté serveur.</td>
+      </tr>
+      <tr>
+        <td><code>429 Too Many Requests</code></td><td>Rate limit dépassé.</td>
+        <td>Retry avec backoff (mais probablement bot — review log).</td>
+      </tr>
+      <tr>
+        <td><code>503 Service Unavailable</code></td><td>DB down ou redémarrage.</td>
+        <td><strong>Retry obligatoire</strong> avec backoff exponentiel.</td>
+      </tr>
+    </table>
+
+    <h2 id="idempotence">5. Idempotence (submission_id)</h2>
+    <p>
+      Le champ <code>submission_id</code> permet au Logger de dédupliquer les tentatives.
+      Si le front envoie deux fois la même soumission (retry réseau, double-clic), le Logger
+      renvoie <code>200 OK</code> au lieu de créer un doublon.
+    </p>
+    <ul>
+      <li>Générez un <strong>UUID v4 stable</strong> avant le premier envoi.</li>
+      <li>Ré-utilisez le même <code>submission_id</code> pour <strong>tous les retries</strong> de la même soumission.</li>
+      <li>Régénérez un nouvel UUID après un succès, pour la soumission suivante.</li>
+    </ul>
+    <pre><code>// Génération
+const submissionId = crypto.randomUUID();
+
+// Réutilisation pour TOUS les retries de cette soumission
+await fetch(url, { body: JSON.stringify({ ..., submission_id: submissionId }) });</code></pre>
+
+    <h2 id="retry">6. Stratégie de retry</h2>
+    <p>Retry uniquement sur <code>503</code> et erreurs réseau (fetch rejected). Backoff exponentiel.</p>
+    <table>
+      <tr><th>Tentative</th><th>Délai avant retry</th></tr>
+      <tr><td>1</td><td>500 ms</td></tr>
+      <tr><td>2</td><td>1 s</td></tr>
+      <tr><td>3</td><td>2 s</td></tr>
+      <tr><td>échec final</td><td>afficher message d'erreur utilisateur</td></tr>
+    </table>
+    <p>Ne pas retry sur <code>4xx</code> (erreurs définitives) ni sur <code>200</code>/<code>201</code>.</p>
+
+    <h2 id="cors">7. CORS &amp; domaines autorisés</h2>
+    <p>
+      Le Logger n'accepte de requêtes <code>POST</code> que depuis les domaines listés dans
+      <code>CORS_ORIGINS</code> côté serveur. Si une nouvelle landing page est déployée sur un
+      nouveau domaine, ouvrir un ticket pour <strong>l'ajouter à la whitelist CORS</strong>.
+    </p>
+    <p>Domaines autorisés en production (V1) :</p>
+    <ul>
+      <li><code>choyou.fr</code> (incluant tous les sous-domaines)</li>
+      <li><code>itforbusiness.fr</code> (incluant tous les sous-domaines)</li>
+    </ul>
+
+    <h2 id="exemple">8. Exemple complet</h2>
+    <p>
+      Une démo end-to-end est disponible dans <code>examples/landing-page/index.html</code>
+      du repo. Elle inclut : payload-builder, retry, idempotence, UTM, honeypot anti-spam.
+      À copier/coller comme starter.
+    </p>
+    <pre><code>// Snippet minimal
+const submissionId = crypto.randomUUID();
+
+async function submitForm(form) {
+  const payload = {};
+  form.querySelectorAll('input[name]').forEach((input) =&gt; {
+    if (input.value.trim()) payload[input.name] = input.value.trim();
+  });
+
+  const utm = new URLSearchParams(window.location.search);
+  const body = {
+    public_token: 'YOUR_PUBLIC_TOKEN',
+    submission_id: submissionId,
+    form_payload: payload,
+    landing_page_url: window.location.href,
+    utm_source: utm.get('utm_source') || undefined,
+    utm_medium: utm.get('utm_medium') || undefined,
+    utm_campaign: utm.get('utm_campaign') || undefined,
+  };
+
+  const res = await fetch('https://logger.attendee.fr/v1/public-form-logs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok &amp;&amp; res.status !== 200) throw new Error('Logger failed: ' + res.status);
+}</code></pre>
+
+    <h2 id="checklist">9. Checklist d'intégration</h2>
+    <ol>
+      <li>Récupérer le <code>public_token</code> de l'événement auprès d'Attendee.</li>
+      <li>Vérifier que le domaine de la landing est dans la whitelist CORS du Logger.</li>
+      <li>Générer un <code>submission_id</code> unique côté client (UUID v4).</li>
+      <li>Construire le <code>form_payload</code> dans l'ordre d'affichage des champs.</li>
+      <li>Envoyer en <strong>parallèle</strong> à Attendee (chemin principal) et au Logger (filet de sécurité).</li>
+      <li>Implémenter le retry exponentiel sur 503 / erreurs réseau.</li>
+      <li>Ajouter un honeypot anti-spam (input invisible — drop si rempli).</li>
+      <li>Tester un cas de duplicate (double submit) → vérifier que le Logger renvoie 200.</li>
+      <li>Tester sans réseau → vérifier que l'UI ne se bloque pas.</li>
+      <li>Vérifier dans l'admin du Logger que la soumission apparaît avec les bonnes colonnes.</li>
+    </ol>
+
+    <h2 id="faq">10. FAQ</h2>
+
+    <h3>Que se passe-t-il si Attendee est down mais que le Logger a reçu la soumission ?</h3>
+    <p>
+      Le lead est sauvé. En V1, l'admin du Logger permet de retrouver les leads et de relancer
+      manuellement. En V2, un mécanisme de replay automatique synchronisera les leads manquants.
+    </p>
+
+    <h3>Le Logger renvoie 503 — que faire côté UI ?</h3>
+    <p>
+      Retry 3 fois en backoff. Si tous les retries échouent, afficher un message d'erreur
+      utilisateur ("Réessayez dans quelques instants"). Ne pas perdre la soumission côté UI :
+      on peut éventuellement la garder en <code>localStorage</code> pour un retry manuel ultérieur.
+    </p>
+
+    <h3>Faut-il valider l'email côté client ?</h3>
+    <p>
+      Oui — le Logger ne fait pas de validation métier (juste structurelle). C'est au front
+      d'imposer ses règles avant l'envoi.
+    </p>
+
+    <h3>Est-ce que je peux envoyer des champs custom (pas dans l'exemple) ?</h3>
+    <p>
+      Oui. <code>form_payload</code> est un objet libre (max 100 clés, max 32 KB). Les colonnes
+      dans l'admin se génèrent automatiquement à partir des clés payload reçues.
+    </p>
+
+    <h3>Que faire avec l'erreur 403 CORS ?</h3>
+    <p>
+      Demander à l'équipe back d'ajouter votre domaine à <code>CORS_ORIGINS</code>. Pas de
+      bypass possible côté front.
+    </p>
+
+    <hr style="margin: 48px 0 24px; border: none; border-top: 1px solid var(--border);" />
+    <p style="text-align: center; color: var(--muted); font-size: 13px;">
+      Public Form Logger · v1.0 · Avril 2026
+    </p>
+  </div>
+</body>
+</html>

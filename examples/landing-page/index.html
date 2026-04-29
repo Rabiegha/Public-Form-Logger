@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inscription — Démo Landing Page</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border: #e2e8f0;
+      --error: #dc2626;
+      --success: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text);
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      max-width: 540px;
+      width: 100%;
+      padding: 40px;
+    }
+    .card-header { text-align: center; margin-bottom: 32px; }
+    .card-header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 700; }
+    .card-header p { margin: 0; color: var(--muted); font-size: 15px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .field label .required { color: var(--error); }
+    .field input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    /* Honeypot — must stay invisible to humans */
+    .honeypot {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+    button[type=submit] {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 8px;
+    }
+    button[type=submit]:hover { background: var(--primary-hover); }
+    button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
+    .feedback {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    .feedback.success { background: #dcfce7; color: var(--success); display: block; }
+    .feedback.error { background: #fee2e2; color: var(--error); display: block; }
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .footer code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    @media (max-width: 480px) {
+      .row { grid-template-columns: 1fr; }
+      .card { padding: 28px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header class="card-header">
+      <h1>Inscription à l'événement</h1>
+      <p>Réservez votre place en quelques secondes.</p>
+    </header>
+
+    <form id="signup-form" novalidate>
+      <div class="row">
+        <div class="field">
+          <label for="firstName">Prénom <span class="required">*</span></label>
+          <input id="firstName" name="firstName" type="text" required autocomplete="given-name" />
+        </div>
+        <div class="field">
+          <label for="lastName">Nom <span class="required">*</span></label>
+          <input id="lastName" name="lastName" type="text" required autocomplete="family-name" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Email <span class="required">*</span></label>
+        <input id="email" name="email" type="email" required autocomplete="email" />
+      </div>
+
+      <div class="field">
+        <label for="phone">Téléphone</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" />
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="company">Société</label>
+          <input id="company" name="company" type="text" autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="jobTitle">Poste</label>
+          <input id="jobTitle" name="jobTitle" type="text" autocomplete="organization-title" />
+        </div>
+      </div>
+
+      <!-- Honeypot anti-spam : doit rester vide -->
+      <div class="honeypot" aria-hidden="true">
+        <label for="website">Ne pas remplir</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <button type="submit" id="submit-btn">Je m'inscris</button>
+      <div id="feedback" class="feedback" role="status"></div>
+    </form>
+
+    <div class="footer">
+      Démo — token : <code>96be0d69-bfaf-4e34-9255-f5a0bbeee5ec</code>
+    </div>
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+
+    /* ------------------------------------------------------------------ */
+    /* Configuration                                                       */
+    /* ------------------------------------------------------------------ */
+    const CONFIG = {
+      // En prod, remplacer par https://logger.attendee.fr (ou domaine équivalent)
+      apiBaseUrl: 'http://localhost:4001',
+      publicToken: '96be0d69-bfaf-4e34-9255-f5a0bbeee5ec',
+      // Nombre de retries en cas de panne serveur (503 / network error)
+      maxRetries: 3,
+      // Backoff exponentiel : 500ms, 1s, 2s
+      backoffMs: 500,
+    };
+
+    /* ------------------------------------------------------------------ */
+    /* Helpers                                                             */
+    /* ------------------------------------------------------------------ */
+
+    /** UUID v4 pour idempotence — clef stable pour retry. */
+    function uuidv4() {
+      if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
+
+    /** Extrait les paramètres UTM de l'URL courante. */
+    function extractUtm() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        utm_source: params.get('utm_source') || undefined,
+        utm_medium: params.get('utm_medium') || undefined,
+        utm_campaign: params.get('utm_campaign') || undefined,
+      };
+    }
+
+    /** Sérialise les champs du formulaire dans l'ordre du DOM. */
+    function collectPayload(form) {
+      const payload = {};
+      // Itère sur les <input> dans l'ordre HTML — préserve l'ordre des champs
+      form.querySelectorAll('input[name]').forEach(function (input) {
+        // Ignore le honeypot
+        if (input.closest('.honeypot')) return;
+        const value = (input.value || '').trim();
+        if (value) payload[input.name] = value;
+      });
+      return payload;
+    }
+
+    /** POST avec retry exponentiel sur 503 / erreurs réseau. */
+    async function postWithRetry(url, body, attempt) {
+      attempt = attempt || 0;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(body),
+        });
+        // 200 = duplicate (idempotence), 201 = created, 4xx = définitif
+        if (res.status === 503 && attempt < CONFIG.maxRetries) {
+          await new Promise((r) => setTimeout(r, CONFIG.backoffMs * Math.pow(2, attempt)));
+          return postWithRetry(url, body, attempt + 1);
+        }
+        return res;
+      } catch (err) {
+        if (attempt < CONFIG.maxRetries) {
+          await new Promise((r) => setTimeout(r, CONFIG.backoffMs * Math.pow(2, attempt)));
+          return postWithRetry(url, body, attempt + 1);
+        }
+        throw err;
+      }
+    }
+
+    /* ------------------------------------------------------------------ */
+    /* Submit handler                                                      */
+    /* ------------------------------------------------------------------ */
+    const form = document.getElementById('signup-form');
+    const btn = document.getElementById('submit-btn');
+    const feedback = document.getElementById('feedback');
+    // submission_id stable pour la durée de la page (idempotence)
+    let submissionId = uuidv4();
+
+    function showFeedback(type, message) {
+      feedback.className = 'feedback ' + type;
+      feedback.textContent = message;
+    }
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      feedback.className = 'feedback';
+      feedback.textContent = '';
+
+      // Honeypot : si rempli, on simule un succès et on droppe silencieusement
+      if (form.querySelector('.honeypot input').value.trim()) {
+        showFeedback('success', 'Merci, votre inscription a bien été enregistrée.');
+        form.reset();
+        return;
+      }
+
+      const payload = collectPayload(form);
+      if (!payload.firstName || !payload.lastName || !payload.email) {
+        showFeedback('error', 'Merci de remplir les champs obligatoires.');
+        return;
+      }
+
+      const utm = extractUtm();
+      const body = {
+        public_token: CONFIG.publicToken,
+        submission_id: submissionId,
+        form_payload: payload,
+        landing_page_url: window.location.href,
+      };
+      if (utm.utm_source) body.utm_source = utm.utm_source;
+      if (utm.utm_medium) body.utm_medium = utm.utm_medium;
+      if (utm.utm_campaign) body.utm_campaign = utm.utm_campaign;
+
+      btn.disabled = true;
+      btn.textContent = 'Envoi…';
+      try {
+        const res = await postWithRetry(CONFIG.apiBaseUrl + '/v1/public-form-logs', body);
+        if (res.ok) {
+          showFeedback('success', 'Merci, votre inscription a bien été enregistrée !');
+          form.reset();
+          submissionId = uuidv4(); // Nouvelle clef pour la prochaine soumission
+        } else {
+          const data = await res.json().catch(function () { return {}; });
+          showFeedback('error', (data && data.message) || 'Erreur lors de l\'envoi (' + res.status + ').');
+        }
+      } catch (err) {
+        showFeedback('error', 'Connexion impossible. Réessayez dans quelques instants.');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Je m\'inscris';
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

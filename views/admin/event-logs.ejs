@@ -12,9 +12,9 @@
     <div class="muted small mono"><%= event.publicToken %></div>
     <% if (event.eventStartAt) { %>
       <div class="muted small">
-        <%= new Date(event.eventStartAt).toLocaleDateString('fr-FR') %>
+        <%= new Date(event.eventStartAt).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) %>
         <% if (event.eventEndAt) { %>
-          → <%= new Date(event.eventEndAt).toLocaleDateString('fr-FR') %>
+          → <%= new Date(event.eventEndAt).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) %>
         <% } %>
       </div>
     <% } %>
@@ -84,7 +84,7 @@
     <% rows.forEach((r) => { %>
       <tr>
         <td class="col-check"><input type="checkbox" class="row-check" value="<%= r.id %>" /></td>
-        <td data-col="created_at" class="mono small"><%= new Date(r.createdAt).toLocaleString('fr-FR') %></td>
+        <td data-col="created_at" class="mono small"><%= new Date(r.createdAt).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) %></td>
         <% payloadKeys.forEach((key) => { %>
           <td data-col="payload:<%= key %>" class="<%= defaultPayloadSet.has(key) ? '' : 'hidden-default' %>"><%= r.payloadValues[key] || '—' %></td>
         <% }) %>

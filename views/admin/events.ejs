@@ -6,7 +6,7 @@
   <div class="stat"><div class="stat-label">Last 7 days</div><div class="stat-value"><%= stats.last7d %></div></div>
   <div class="stat"><div class="stat-label">Last received</div>
     <div class="stat-value small">
-      <%= stats.lastReceivedAt ? new Date(stats.lastReceivedAt).toLocaleString('fr-FR') : '—' %>
+      <%= stats.lastReceivedAt ? new Date(stats.lastReceivedAt).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) : '—' %>
     </div>
   </div>
 </section>
@@ -30,14 +30,14 @@
           <div class="event-card-meta">
             <span class="pill"><%= it.count %> log<%= it.count > 1 ? 's' : '' %></span>
             <span class="muted small">
-              dernier : <%= new Date(it.lastReceivedAt).toLocaleString('fr-FR') %>
+              dernier : <%= new Date(it.lastReceivedAt).toLocaleString('fr-FR', { timeZone: 'Europe/Paris' }) %>
             </span>
           </div>
           <% if (it.eventStartAt) { %>
             <div class="event-card-dates muted small">
-              <%= new Date(it.eventStartAt).toLocaleDateString('fr-FR') %>
+              <%= new Date(it.eventStartAt).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) %>
               <% if (it.eventEndAt) { %>
-                → <%= new Date(it.eventEndAt).toLocaleDateString('fr-FR') %>
+                → <%= new Date(it.eventEndAt).toLocaleDateString('fr-FR', { timeZone: 'Europe/Paris' }) %>
               <% } %>
             </div>
           <% } else if (!it.eventName) { %>
