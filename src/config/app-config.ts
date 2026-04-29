@@ -40,6 +40,15 @@ export interface AppConfig {
   };
 
   trustProxyHops: number;
+
+  attendee: {
+    /** Base URL of the Attendee API (used to fetch event names by public_token). */
+    apiBaseUrl: string;
+    /** Cache TTL in seconds for Attendee event metadata. */
+    eventCacheTtlSec: number;
+    /** HTTP timeout in ms for outbound calls to Attendee. */
+    httpTimeoutMs: number;
+  };
 }
 
 function requireEnv(key: string): string {
@@ -106,5 +115,10 @@ export function loadConfig(): AppConfig {
       maxFormPayloadKeys: parseInt10(process.env.MAX_FORM_PAYLOAD_KEYS, 100),
     },
     trustProxyHops: parseInt10(process.env.TRUST_PROXY_HOPS, 1),
+    attendee: {
+      apiBaseUrl: (process.env.ATTENDEE_API_BASE_URL ?? 'https://api.attendee.fr').replace(/\/+$/, ''),
+      eventCacheTtlSec: parseInt10(process.env.ATTENDEE_EVENT_CACHE_TTL_SEC, 3600),
+      httpTimeoutMs: parseInt10(process.env.ATTENDEE_HTTP_TIMEOUT_MS, 3000),
+    },
   };
 }

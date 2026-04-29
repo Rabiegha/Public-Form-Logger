@@ -170,4 +170,120 @@ export class PublicFormLogsService {
     ]);
     return { last24h, last7d, lastReceivedAt: latest?.createdAt ?? null };
   }
+
+  // -- Event grouping --------------------------------------------------------
+
+  /**
+   * Distinct public_token values with count + last received timestamp.
+   * Used by the admin landing page to render the event list.
+   */
+  async listEventGroups(): Promise<
+    Array<{ publicToken: string; count: number; lastReceivedAt: Date }>
+  > {
+    const groups = await this.prisma.publicFormLog.groupBy({
+      by: ['publicToken'],
+      _count: { _all: true },
+      _max: { createdAt: true },
+      orderBy: { _max: { createdAt: 'desc' } },
+    });
+    return groups
+      .filter((g) => g._max.createdAt !== null)
+      .map((g) => ({
+        publicToken: g.publicToken,
+        count: g._count._all,
+        lastReceivedAt: g._max.createdAt as Date,
+      }));
+  }
+
+  // -- Search by name / firstname / email within an event --------------------
+
+  /**
+   * Paginated list of logs for a given event (publicToken), with optional
+   * full-text-ish search over the standard name / firstname / email payload
+   * variants. Implemented via Postgres `jsonb` text cast + ILIKE for V1.
+   */
+  async findEventLogs(params: {
+    publicToken: string;
+    page: number;
+    pageSize: number;
+    search?: string;
+  }): Promise<{ items: PublicFormLog[]; total: number }> {
+    const { publicToken, page, pageSize, search } = params;
+    const skip = (page - 1) * pageSize;
+
+    if (!search || !search.trim()) {
+      const [items, total] = await this.prisma.$transaction([
+        this.prisma.publicFormLog.findMany({
+          where: { publicToken },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: pageSize,
+        }),
+        this.prisma.publicFormLog.count({ where: { publicToken } }),
+      ]);
+      return { items, total };
+    }
+
+    // Search implementation: we use a raw query that matches the search term
+    // against the payload's name/firstname/email-like keys (case-insensitive).
+    // Variants intentionally mirror common EN/FR variations.
+    const term = `%${search.trim().replace(/[%_]/g, '\\$&')}%`;
+    const variants = [
+      'first_name','firstname','prenom','prénom','givenname','given_name',
+      'last_name','lastname','nom','familyname','family_name','surname',
+      'email','e_mail','e-mail','mail','courriel','emailaddress','email_address',
+    ];
+    const orConditions = variants
+      .map((k) => `("formPayload" ->> '${k}') ILIKE $2`)
+      .join(' OR ');
+
+    // Two queries: items + total. Keep it readable, no separate CTE.
+    const itemsRaw = await this.prisma.$queryRawUnsafe<PublicFormLog[]>(
+      `SELECT * FROM "PublicFormLog"
+       WHERE "publicToken" = $1
+         AND (${orConditions})
+       ORDER BY "createdAt" DESC
+       OFFSET ${skip} LIMIT ${pageSize}`,
+      publicToken,
+      term,
+    );
+    const totalRaw = await this.prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
+      `SELECT COUNT(*)::bigint AS count FROM "PublicFormLog"
+       WHERE "publicToken" = $1
+         AND (${orConditions})`,
+      publicToken,
+      term,
+    );
+    const total = Number(totalRaw[0]?.count ?? 0);
+    return { items: itemsRaw, total };
+  }
+
+  /**
+   * Bulk fetch for export. Either by IDs (selected rows) or all matching
+   * the event + optional search filter. Hard-capped to avoid runaway exports.
+   */
+  async findForExport(params: {
+    publicToken: string;
+    ids?: string[];
+    search?: string;
+    limit?: number;
+  }): Promise<PublicFormLog[]> {
+    const limit = Math.min(params.limit ?? 10_000, 50_000);
+
+    if (params.ids && params.ids.length > 0) {
+      return this.prisma.publicFormLog.findMany({
+        where: { publicToken: params.publicToken, id: { in: params.ids } },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+      });
+    }
+
+    const { items } = await this.findEventLogs({
+      publicToken: params.publicToken,
+      page: 1,
+      pageSize: limit,
+      search: params.search,
+    });
+    return items;
+  }
 }

@@ -1,0 +1,232 @@
+<% const title = (event.eventName || 'Event') + ' · Logs'; %>
+<%- include('partials/header', { title, user }) %>
+
+<a href="/admin/events" class="link-btn">← Tous les événements</a>
+
+<header class="event-header">
+  <div>
+    <h2>
+      <%= event.eventName || 'Événement sans nom' %>
+      <% if (event.eventCode) { %><span class="badge"><%= event.eventCode %></span><% } %>
+    </h2>
+    <div class="muted small mono"><%= event.publicToken %></div>
+    <% if (event.eventStartAt) { %>
+      <div class="muted small">
+        <%= new Date(event.eventStartAt).toLocaleDateString('fr-FR') %>
+        <% if (event.eventEndAt) { %>
+          → <%= new Date(event.eventEndAt).toLocaleDateString('fr-FR') %>
+        <% } %>
+      </div>
+    <% } %>
+  </div>
+  <div class="event-header-stats">
+    <span class="pill"><%= total %> log<%= total > 1 ? 's' : '' %></span>
+  </div>
+</header>
+
+<form method="GET" action="/admin/events/<%= encodeURIComponent(event.publicToken) %>" class="filters">
+  <input type="search" name="search" placeholder="Rechercher (nom, prénom, email)…" value="<%= search %>" />
+  <select name="pageSize">
+    <% pageSizes.forEach((s) => { %>
+      <option value="<%= s %>" <%= s === pageSize ? 'selected' : '' %>><%= s %> / page</option>
+    <% }) %>
+  </select>
+  <button type="submit">Filtrer</button>
+  <a href="/admin/events/<%= encodeURIComponent(event.publicToken) %>" class="link-btn">Reset</a>
+
+  <div class="actions-right">
+    <button type="button" id="col-toggle-btn" class="link-btn">Colonnes</button>
+    <button type="button" id="export-btn">Export</button>
+  </div>
+</form>
+
+<% const defaultPayloadSet = new Set(defaultVisiblePayloadKeys || []); %>
+
+<div id="col-toggle-panel" class="col-toggle-panel hidden">
+  <strong>Champs du formulaire</strong>
+  <% if (payloadKeys.length === 0) { %>
+    <div class="muted small">Aucun champ payload détecté sur cette page.</div>
+  <% } else { %>
+    <% payloadKeys.forEach((key) => { %>
+      <label>
+        <input type="checkbox" data-col="payload:<%= key %>" <%= defaultPayloadSet.has(key) ? 'checked' : '' %> />
+        <%= key %>
+      </label>
+    <% }) %>
+  <% } %>
+  <strong>Métadonnées</strong>
+  <label><input type="checkbox" data-col="created_at" checked /> Date</label>
+  <label><input type="checkbox" data-col="utm" /> UTM</label>
+  <label><input type="checkbox" data-col="ip" /> IP</label>
+  <label><input type="checkbox" data-col="size" /> Taille</label>
+  <label><input type="checkbox" data-col="submission_id" /> submission_id</label>
+</div>
+
+<table class="logs">
+  <thead>
+    <tr>
+      <th class="col-check"><input type="checkbox" id="select-all" /></th>
+      <th data-col="created_at">Date</th>
+      <% payloadKeys.forEach((key) => { %>
+        <th data-col="payload:<%= key %>" class="<%= defaultPayloadSet.has(key) ? '' : 'hidden-default' %>"><%= key %></th>
+      <% }) %>
+      <th data-col="utm" class="hidden-default">UTM</th>
+      <th data-col="ip" class="hidden-default">IP</th>
+      <th data-col="size" class="hidden-default">Taille</th>
+      <th data-col="submission_id" class="hidden-default">submission_id</th>
+      <th>Détail</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (rows.length === 0) { %>
+      <tr><td colspan="<%= 7 + payloadKeys.length %>" class="muted center">Aucun log trouvé</td></tr>
+    <% } %>
+    <% rows.forEach((r) => { %>
+      <tr>
+        <td class="col-check"><input type="checkbox" class="row-check" value="<%= r.id %>" /></td>
+        <td data-col="created_at" class="mono small"><%= new Date(r.createdAt).toLocaleString('fr-FR') %></td>
+        <% payloadKeys.forEach((key) => { %>
+          <td data-col="payload:<%= key %>" class="<%= defaultPayloadSet.has(key) ? '' : 'hidden-default' %>"><%= r.payloadValues[key] || '—' %></td>
+        <% }) %>
+        <td data-col="utm" class="small hidden-default">
+          <%= [r.utmSource, r.utmMedium, r.utmCampaign].filter(Boolean).join(' / ') || '—' %>
+        </td>
+        <td data-col="ip" class="mono small hidden-default"><%= r.ipAddress || '—' %></td>
+        <td data-col="size" class="hidden-default"><%= r.formPayloadSize %> B</td>
+        <td data-col="submission_id" class="mono small hidden-default"><%= r.submissionId || '—' %></td>
+        <td><a href="/admin/logs/<%= r.id %>">Voir</a></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<nav class="pagination">
+  <span class="muted"><%= total %> total · page <%= page %> / <%= totalPages %></span>
+  <% function buildUrl(p) { %>
+    <% return '/admin/events/' + encodeURIComponent(event.publicToken)
+       + '?page=' + p
+       + '&pageSize=' + pageSize
+       + '&search=' + encodeURIComponent(search); %>
+  <% } %>
+  <% if (page > 1) { %>
+    <a href="<%= buildUrl(1) %>">«</a>
+    <a href="<%= buildUrl(page - 1) %>">‹ Précédent</a>
+  <% } %>
+  <% if (page < totalPages) { %>
+    <a href="<%= buildUrl(page + 1) %>">Suivant ›</a>
+    <a href="<%= buildUrl(totalPages) %>">»</a>
+  <% } %>
+</nav>
+
+<!-- Export modal -->
+<div id="export-modal" class="modal hidden" role="dialog" aria-modal="true">
+  <div class="modal-card">
+    <header>
+      <h3>Exporter les logs</h3>
+      <button type="button" class="link-btn" data-close-modal>×</button>
+    </header>
+    <div class="modal-body">
+      <p class="muted small">
+        Sélectionne les colonnes à inclure. Si aucune ligne n'est cochée dans la
+        liste, tous les logs filtrés sont exportés (jusqu'à 50 000).
+      </p>
+      <div class="modal-section">
+        <strong>Format</strong>
+        <label><input type="radio" name="export-format" value="xlsx" checked /> Excel (.xlsx)</label>
+        <label><input type="radio" name="export-format" value="csv" /> CSV</label>
+      </div>
+      <% if (payloadKeys.length) { %>
+        <div class="modal-section">
+          <strong>Champs du formulaire</strong>
+          <% payloadKeys.forEach((key) => { %>
+            <label>
+              <input type="checkbox" name="export-payload" value="<%= key %>" <%= defaultPayloadSet.has(key) ? 'checked' : '' %> />
+              <%= key %>
+            </label>
+          <% }) %>
+        </div>
+      <% } %>
+      <div class="modal-section">
+        <strong>Métadonnées</strong>
+        <label><input type="checkbox" name="export-built" value="created_at" checked /> Date</label>
+        <label><input type="checkbox" name="export-built" value="public_token" /> public_token</label>
+        <label><input type="checkbox" name="export-built" value="submission_id" /> submission_id</label>
+        <label><input type="checkbox" name="export-built" value="landing_page_url" checked /> landing_page_url</label>
+        <label><input type="checkbox" name="export-built" value="referer" /> referer</label>
+        <label><input type="checkbox" name="export-built" value="user_agent" /> user_agent</label>
+        <label><input type="checkbox" name="export-built" value="ip_address" checked /> ip_address</label>
+        <label><input type="checkbox" name="export-built" value="utm_source" checked /> utm_source</label>
+        <label><input type="checkbox" name="export-built" value="utm_medium" checked /> utm_medium</label>
+        <label><input type="checkbox" name="export-built" value="utm_campaign" checked /> utm_campaign</label>
+        <label><input type="checkbox" name="export-built" value="payload_size" /> payload_size</label>
+      </div>
+      <div class="modal-section">
+        <strong>Champs payload supplémentaires</strong>
+        <p class="muted small">Liste séparée par virgules (ex: <code>company,phone</code>).</p>
+        <input type="text" id="export-extra-keys" placeholder="key1,key2" />
+      </div>
+    </div>
+    <footer>
+      <button type="button" class="link-btn" data-close-modal>Annuler</button>
+      <button type="button" id="export-confirm">Télécharger</button>
+    </footer>
+  </div>
+</div>
+
+<script>
+(function() {
+  // --- Column visibility -----------------------------------------------------
+  const togglePanel = document.getElementById('col-toggle-panel');
+  document.getElementById('col-toggle-btn').addEventListener('click', () => {
+    togglePanel.classList.toggle('hidden');
+  });
+  document.querySelectorAll('th.hidden-default, td.hidden-default').forEach((c) => {
+    c.classList.add('col-hidden');
+  });
+  togglePanel.querySelectorAll('input[type=checkbox]').forEach((cb) => {
+    if (!cb.checked) {
+      document.querySelectorAll('[data-col="' + cb.dataset.col + '"]').forEach((c) => c.classList.add('col-hidden'));
+    }
+    cb.addEventListener('change', () => {
+      const sel = '[data-col="' + cb.dataset.col + '"]';
+      document.querySelectorAll(sel).forEach((c) => c.classList.toggle('col-hidden', !cb.checked));
+    });
+  });
+
+  // --- Select all ------------------------------------------------------------
+  document.getElementById('select-all').addEventListener('change', (e) => {
+    document.querySelectorAll('.row-check').forEach((c) => { c.checked = e.target.checked; });
+  });
+
+  // --- Modal -----------------------------------------------------------------
+  const modal = document.getElementById('export-modal');
+  document.getElementById('export-btn').addEventListener('click', () => modal.classList.remove('hidden'));
+  modal.querySelectorAll('[data-close-modal]').forEach((b) => b.addEventListener('click', () => modal.classList.add('hidden')));
+  modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+
+  // --- Export confirm --------------------------------------------------------
+  document.getElementById('export-confirm').addEventListener('click', () => {
+    const fmt = (modal.querySelector('input[name=export-format]:checked') || {}).value || 'xlsx';
+    const built = Array.from(modal.querySelectorAll('input[name=export-built]:checked')).map((i) => i.value);
+    const payloadSelected = Array.from(modal.querySelectorAll('input[name=export-payload]:checked')).map((i) => i.value);
+    const extraRaw = (document.getElementById('export-extra-keys').value || '').trim();
+    const extraKeys = extraRaw ? extraRaw.split(',').map((v) => v.trim()).filter(Boolean) : [];
+    const allPayload = payloadSelected.concat(extraKeys.filter((k) => !payloadSelected.includes(k)));
+    const ids = Array.from(document.querySelectorAll('.row-check:checked')).map((c) => c.value);
+    const search = '<%- search.replace(/'/g, "\\'") %>';
+
+    const params = new URLSearchParams();
+    params.set('format', fmt);
+    if (built.length) params.set('builtIn', built.join(','));
+    if (allPayload.length) params.set('payloadKeys', allPayload.join(','));
+    if (ids.length) params.set('ids', ids.join(','));
+    if (search) params.set('search', search);
+
+    const url = '/admin/api/events/<%= encodeURIComponent(event.publicToken) %>/export?' + params.toString();
+    window.location.href = url;
+    modal.classList.add('hidden');
+  });
+})();
+</script>
+
+<%- include('partials/footer') %>

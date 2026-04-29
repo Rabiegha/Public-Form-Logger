@@ -1,40 +1,54 @@
-<% const title = 'Log detail'; %>
+<% const title = 'Log ' + log.id.slice(0, 8); %>
 <%- include('partials/header', { title, user }) %>
 
-<a href="/admin/dashboard" class="link-btn">← Back to dashboard</a>
+<a href="/admin/events/<%= encodeURIComponent(log.publicToken) %>" class="link-btn">← Retour à l'événement</a>
 
-<h2>Log <span class="mono small"><%= log.id %></span></h2>
+<header class="event-header">
+  <div>
+    <h2>Log <span class="mono small">#<%= log.id %></span></h2>
+    <div class="muted small">
+      Reçu le <%= new Date(log.createdAt).toLocaleString('fr-FR') %>
+    </div>
+    <div class="muted small">
+      Événement : <strong><%= eventName || 'Sans nom' %></strong>
+      <span class="mono">(<%= log.publicToken %>)</span>
+    </div>
+  </div>
+</header>
 
-<dl class="meta">
-  <dt>Created</dt><dd class="mono"><%= new Date(log.createdAt).toISOString() %></dd>
-  <dt>public_token</dt><dd class="mono"><%= log.publicToken %></dd>
-  <dt>submission_id</dt><dd class="mono"><%= log.submissionId || '—' %></dd>
-  <dt>Payload size</dt><dd><%= log.formPayloadSize %> B</dd>
-  <dt>Landing page URL</dt><dd class="break"><%= log.landingPageUrl || '—' %></dd>
-  <dt>Referer</dt><dd class="break"><%= log.referer || '—' %></dd>
-  <dt>User-Agent</dt><dd class="break small"><%= log.userAgent || '—' %></dd>
-  <dt>IP address</dt><dd class="mono"><%= log.ipAddress || '—' %></dd>
-  <dt>UTM source</dt><dd><%= log.utmSource || '—' %></dd>
-  <dt>UTM medium</dt><dd><%= log.utmMedium || '—' %></dd>
-  <dt>UTM campaign</dt><dd><%= log.utmCampaign || '—' %></dd>
-</dl>
+<section class="detail-section">
+  <h3>Champs du formulaire</h3>
+  <% if (row.payloadKeys.length === 0) { %>
+    <p class="muted small">Payload vide.</p>
+  <% } else { %>
+    <dl class="kv">
+      <% row.payloadKeys.forEach((k) => { %>
+        <dt><%= k %></dt>
+        <dd><%= row.payloadValues[k] || '—' %></dd>
+      <% }) %>
+    </dl>
+  <% } %>
+</section>
 
-<div class="payload-header">
-  <h3>form_payload</h3>
-  <button type="button" id="copy-btn" class="link-btn">Copy JSON</button>
-</div>
-<pre id="payload"><%= payloadJson %></pre>
+<section class="detail-section">
+  <h3>Métadonnées</h3>
+  <dl class="kv">
+    <dt>submission_id</dt><dd class="mono small"><%= log.submissionId || '—' %></dd>
+    <dt>landing_page_url</dt><dd class="small"><%= log.landingPageUrl || '—' %></dd>
+    <dt>referer</dt><dd class="small"><%= log.referer || '—' %></dd>
+    <dt>user_agent</dt><dd class="small"><%= log.userAgent || '—' %></dd>
+    <dt>ip_address</dt><dd class="mono small"><%= log.ipAddress || '—' %></dd>
+    <dt>UTM source/medium/campaign</dt>
+    <dd class="small">
+      <%= [log.utmSource, log.utmMedium, log.utmCampaign].filter(Boolean).join(' / ') || '—' %>
+    </dd>
+    <dt>payload size</dt><dd><%= log.formPayloadSize %> B</dd>
+  </dl>
+</section>
 
-<script>
-document.getElementById('copy-btn').addEventListener('click', async () => {
-  const txt = document.getElementById('payload').textContent;
-  try {
-    await navigator.clipboard.writeText(txt);
-    const btn = document.getElementById('copy-btn');
-    btn.textContent = 'Copied ✓';
-    setTimeout(() => (btn.textContent = 'Copy JSON'), 1500);
-  } catch (e) { /* ignore */ }
-});
-</script>
+<section class="detail-section">
+  <h3>Payload JSON brut</h3>
+  <pre class="json-block"><%= payloadJson %></pre>
+</section>
 
 <%- include('partials/footer') %>
