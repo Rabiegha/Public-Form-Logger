@@ -38,7 +38,7 @@ export class AdminAuthController {
       httpOnly: true,
       secure: this.config.admin.cookieSecure,
       sameSite: this.config.admin.cookieSameSite,
-      path: '/',
+      path: this.config.basePath || '/',
       maxAge: this.cookieMaxAgeMs(),
     });
     return { status: 'ok' };
@@ -48,7 +48,7 @@ export class AdminAuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AdminAuthGuard)
   logout(@Req() _req: Request, @Res({ passthrough: true }) res: Response): { status: 'ok' } {
-    res.clearCookie(ADMIN_COOKIE_NAME, { path: '/' });
+    res.clearCookie(ADMIN_COOKIE_NAME, { path: this.config.basePath || '/' });
     return { status: 'ok' };
   }
 

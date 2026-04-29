@@ -51,8 +51,24 @@ async function bootstrap(): Promise<void> {
   // CORS
   app.enableCors(buildCorsOptions(config));
 
-  // Static + EJS for admin UI
-  app.useStaticAssets(join(__dirname, '..', 'public'));
+  // Optional sub-path mount (e.g. /logger) — applied BEFORE static + views
+  if (config.basePath) {
+    app.setGlobalPrefix(config.basePath, {
+      // Health stays reachable at <basePath>/health AND root /health for legacy probes.
+      exclude: [],
+    });
+  }
+
+  // Expose basePath to every EJS template via res.locals.basePath
+  app.use((_req: express.Request, res: express.Response, next: express.NextFunction) => {
+    res.locals.basePath = config.basePath;
+    next();
+  });
+
+  // Static + EJS for admin UI (static assets must be reachable under basePath too)
+  app.useStaticAssets(join(__dirname, '..', 'public'), {
+    prefix: config.basePath || '/',
+  });
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.setViewEngine('ejs');
 

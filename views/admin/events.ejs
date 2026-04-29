@@ -1,4 +1,4 @@
-<% const title = 'Events'; %>
+<% const title = 'Événements'; %>
 <%- include('partials/header', { title, user }) %>
 
 <section class="stats">
@@ -13,13 +13,46 @@
 
 <h2 class="section-title">Événements</h2>
 
+<form method="GET" action="<%= basePath %>/admin/events" class="filters filters-grid">
+  <div class="field">
+    <label for="f-q">Recherche</label>
+    <input id="f-q" type="search" name="q" placeholder="Nom d'événement, public_token ou code…" value="<%= filters.q %>" />
+  </div>
+  <div class="field">
+    <label for="f-from">Reçus depuis</label>
+    <input id="f-from" type="date" name="from" value="<%= filters.from %>" />
+  </div>
+  <div class="field">
+    <label for="f-to">Jusqu'au</label>
+    <input id="f-to" type="date" name="to" value="<%= filters.to %>" />
+  </div>
+  <div class="field">
+    <label for="f-size">Par page</label>
+    <select id="f-size" name="pageSize">
+      <% pageSizes.forEach((s) => { %>
+        <option value="<%= s %>" <%= s === pageSize ? 'selected' : '' %>><%= s %></option>
+      <% }) %>
+    </select>
+  </div>
+  <div class="field actions">
+    <button type="submit">Filtrer</button>
+    <a href="<%= basePath %>/admin/events" class="link-btn">Reset</a>
+  </div>
+</form>
+
 <% if (items.length === 0) { %>
-  <div class="empty-state">Aucun log reçu pour l'instant.</div>
+  <div class="empty-state">
+    <% if (filters.q || filters.from || filters.to) { %>
+      Aucun événement ne correspond à ces filtres.
+    <% } else { %>
+      Aucun log reçu pour l'instant.
+    <% } %>
+  </div>
 <% } else { %>
   <ul class="event-grid">
     <% items.forEach((it) => { %>
       <li class="event-card">
-        <a href="/admin/events/<%= encodeURIComponent(it.publicToken) %>" class="event-card-link">
+        <a href="<%= basePath %>/admin/events/<%= encodeURIComponent(it.publicToken) %>" class="event-card-link">
           <div class="event-card-name">
             <%= it.eventName ? it.eventName : 'Événement sans nom' %>
             <% if (it.eventCode) { %><span class="badge"><%= it.eventCode %></span><% } %>
@@ -47,6 +80,19 @@
       </li>
     <% }) %>
   </ul>
+
+  <%
+    function buildUrl(p) {
+      const params = new URLSearchParams();
+      params.set('page', String(p));
+      params.set('pageSize', String(pageSize));
+      if (filters.q) params.set('q', filters.q);
+      if (filters.from) params.set('from', filters.from);
+      if (filters.to) params.set('to', filters.to);
+      return '<%- basePath %>/admin/events?' + params.toString();
+    }
+  %>
+  <%- include('partials/pagination', { page, totalPages, total, pageSize, buildUrl }) %>
 <% } %>
 
 <%- include('partials/footer') %>

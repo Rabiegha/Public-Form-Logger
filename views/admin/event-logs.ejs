@@ -1,7 +1,9 @@
 <% const title = (event.eventName || 'Event') + ' · Logs'; %>
 <%- include('partials/header', { title, user }) %>
 
-<a href="/admin/events" class="link-btn">← Tous les événements</a>
+<div class="event-header-top">
+  <a href="<%= basePath %>/admin/events" class="link-btn">← Tous les événements</a>
+</div>
 
 <header class="event-header">
   <div>
@@ -24,15 +26,15 @@
   </div>
 </header>
 
-<form method="GET" action="/admin/events/<%= encodeURIComponent(event.publicToken) %>" class="filters">
+<form method="GET" action="<%= basePath %>/admin/events/<%= encodeURIComponent(event.publicToken) %>" class="filters">
   <input type="search" name="search" placeholder="Rechercher (nom, prénom, email)…" value="<%= search %>" />
   <select name="pageSize">
     <% pageSizes.forEach((s) => { %>
       <option value="<%= s %>" <%= s === pageSize ? 'selected' : '' %>><%= s %> / page</option>
     <% }) %>
   </select>
-  <button type="submit">Filtrer</button>
-  <a href="/admin/events/<%= encodeURIComponent(event.publicToken) %>" class="link-btn">Reset</a>
+  <button type="submit">Rechercher</button>
+  <a href="<%= basePath %>/admin/events/<%= encodeURIComponent(event.publicToken) %>" class="link-btn">Reset</a>
 
   <div class="actions-right">
     <button type="button" id="col-toggle-btn" class="link-btn">Colonnes</button>
@@ -94,29 +96,22 @@
         <td data-col="ip" class="mono small hidden-default"><%= r.ipAddress || '—' %></td>
         <td data-col="size" class="hidden-default"><%= r.formPayloadSize %> B</td>
         <td data-col="submission_id" class="mono small hidden-default"><%= r.submissionId || '—' %></td>
-        <td><a href="/admin/logs/<%= r.id %>">Voir</a></td>
+        <td><a href="<%= basePath %>/admin/logs/<%= r.id %>">Voir</a></td>
       </tr>
     <% }) %>
   </tbody>
 </table>
 
-<nav class="pagination">
-  <span class="muted"><%= total %> total · page <%= page %> / <%= totalPages %></span>
-  <% function buildUrl(p) { %>
-    <% return '/admin/events/' + encodeURIComponent(event.publicToken)
-       + '?page=' + p
-       + '&pageSize=' + pageSize
-       + '&search=' + encodeURIComponent(search); %>
-  <% } %>
-  <% if (page > 1) { %>
-    <a href="<%= buildUrl(1) %>">«</a>
-    <a href="<%= buildUrl(page - 1) %>">‹ Précédent</a>
-  <% } %>
-  <% if (page < totalPages) { %>
-    <a href="<%= buildUrl(page + 1) %>">Suivant ›</a>
-    <a href="<%= buildUrl(totalPages) %>">»</a>
-  <% } %>
-</nav>
+<%
+  function buildUrl(p) {
+    const params = new URLSearchParams();
+    params.set('page', String(p));
+    params.set('pageSize', String(pageSize));
+    if (search) params.set('search', search);
+    return '<%- basePath %>/admin/events/' + encodeURIComponent(event.publicToken) + '?' + params.toString();
+  }
+%>
+<%- include('partials/pagination', { page, totalPages, total, pageSize, buildUrl }) %>
 
 <!-- Export modal -->
 <div id="export-modal" class="modal hidden" role="dialog" aria-modal="true">
@@ -222,7 +217,7 @@
     if (ids.length) params.set('ids', ids.join(','));
     if (search) params.set('search', search);
 
-    const url = '/admin/api/events/<%= encodeURIComponent(event.publicToken) %>/export?' + params.toString();
+    const url = (window.__BASE_PATH__ || '') + '/admin/api/events/<%= encodeURIComponent(event.publicToken) %>/export?' + params.toString();
     window.location.href = url;
     modal.classList.add('hidden');
   });

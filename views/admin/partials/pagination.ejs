@@ -1,0 +1,58 @@
+<%
+// Reusable pagination component.
+// Required locals: page (number), totalPages (number), buildUrl(p) function
+//   that returns the URL for a given page number.
+// Optional: total (number), pageSize (number)
+const cur = page;
+const last = totalPages;
+const pages = [];
+if (last <= 7) {
+  for (let i = 1; i <= last; i++) pages.push(i);
+} else {
+  pages.push(1);
+  if (cur > 4) pages.push('…');
+  const start = Math.max(2, cur - 1);
+  const end = Math.min(last - 1, cur + 1);
+  for (let i = start; i <= end; i++) pages.push(i);
+  if (cur < last - 3) pages.push('…');
+  pages.push(last);
+}
+%>
+<nav class="pager" aria-label="Pagination">
+  <% if (typeof total !== 'undefined') { %>
+    <span class="pager-info muted small">
+      <%= total %> résultat<%= total > 1 ? 's' : '' %>
+      <% if (typeof pageSize !== 'undefined') { %>
+        · page <%= cur %> / <%= last %>
+      <% } %>
+    </span>
+  <% } %>
+
+  <ul class="pager-list">
+    <% if (cur > 1) { %>
+      <li><a href="<%= buildUrl(1) %>" aria-label="Première page">«</a></li>
+      <li><a href="<%= buildUrl(cur - 1) %>" rel="prev" aria-label="Précédent">‹</a></li>
+    <% } else { %>
+      <li><span class="disabled">«</span></li>
+      <li><span class="disabled">‹</span></li>
+    <% } %>
+
+    <% pages.forEach((p) => { %>
+      <% if (p === '…') { %>
+        <li><span class="ellipsis">…</span></li>
+      <% } else if (p === cur) { %>
+        <li><span class="current" aria-current="page"><%= p %></span></li>
+      <% } else { %>
+        <li><a href="<%= buildUrl(p) %>"><%= p %></a></li>
+      <% } %>
+    <% }) %>
+
+    <% if (cur < last) { %>
+      <li><a href="<%= buildUrl(cur + 1) %>" rel="next" aria-label="Suivant">›</a></li>
+      <li><a href="<%= buildUrl(last) %>" aria-label="Dernière page">»</a></li>
+    <% } else { %>
+      <li><span class="disabled">›</span></li>
+      <li><span class="disabled">»</span></li>
+    <% } %>
+  </ul>
+</nav>

@@ -8,6 +8,13 @@ export interface AppConfig {
   nodeEnv: 'development' | 'production' | 'test';
   port: number;
 
+  /**
+   * Optional URL prefix when the app is mounted under a sub-path
+   * (e.g. behind a shared reverse proxy at https://api.attendee.fr/logger).
+   * Empty string '' means root mount. Always starts with '/' when set.
+   */
+  basePath: string;
+
   databaseUrl: string;
 
   cors: {
@@ -90,9 +97,17 @@ export function loadConfig(): AppConfig {
     }
   }
 
+  // Normalise BASE_PATH: '' | '/logger' (no trailing slash, leading slash required)
+  let basePath = (process.env.BASE_PATH ?? '').trim();
+  if (basePath) {
+    if (!basePath.startsWith('/')) basePath = '/' + basePath;
+    basePath = basePath.replace(/\/+$/, '');
+  }
+
   return {
     nodeEnv,
     port: parseInt10(process.env.PORT, 4001),
+    basePath,
     databaseUrl,
     cors: { origins, explicitOrigins },
     admin: {

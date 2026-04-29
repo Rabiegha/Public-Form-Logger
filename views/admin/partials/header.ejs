@@ -4,18 +4,20 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title><%= title %> · Public Form Logger</title>
-<link rel="stylesheet" href="/admin/style.css" />
+<link rel="stylesheet" href="<%= basePath %>/admin/style.css" />
 </head>
 <body>
 <header class="topbar">
-  <a href="/admin/events" class="brand">Public Form Logger</a>
+  <a href="<%= basePath %>/admin/events" class="brand">Public Form Logger</a>
   <nav>
+    <button type="button" id="theme-toggle" class="link-btn theme-toggle" aria-label="Toggle theme">🌙</button>
     <% if (typeof user !== 'undefined' && user) { %>
       <span class="user"><%= user.email %></span>
-      <form method="POST" action="/admin/auth/logout" class="inline-form" onsubmit="return doLogout(event)">
+      <form method="POST" action="<%= basePath %>/admin/auth/logout" class="inline-form" onsubmit="return doLogout(event)">
         <button type="submit" class="link-btn">Logout</button>
       </form>
     <% } %>
   </nav>
 </header>
+<script>window.__BASE_PATH__ = <%- JSON.stringify(basePath || '') %>;</script>
 <main class="container">

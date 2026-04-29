@@ -1,7 +1,7 @@
 <% const title = 'Log ' + log.id.slice(0, 8); %>
 <%- include('partials/header', { title, user }) %>
 
-<a href="/admin/events/<%= encodeURIComponent(log.publicToken) %>" class="link-btn">← Retour à l'événement</a>
+<a href="<%= basePath %>/admin/events/<%= encodeURIComponent(log.publicToken) %>" class="link-btn">← Retour à l'événement</a>
 
 <header class="event-header">
   <div>

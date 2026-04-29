@@ -3,11 +3,41 @@
 async function doLogout(e) {
   e.preventDefault();
   try {
-    await fetch('/admin/auth/logout', { method: 'POST', credentials: 'same-origin' });
+    await fetch((window.__BASE_PATH__ || '') + '/admin/auth/logout', { method: 'POST', credentials: 'same-origin' });
   } catch (_) { /* ignore */ }
-  window.location.href = '/admin/login';
+  window.location.href = (window.__BASE_PATH__ || '') + '/admin/login';
   return false;
 }
+const themeStorageKey = 'pfl-theme';
+function applyTheme(theme) {
+  const body = document.body;
+  if (theme === 'light') {
+    body.classList.add('light');
+    body.classList.remove('dark');
+  } else {
+    body.classList.add('dark');
+    body.classList.remove('light');
+  }
+  localStorage.setItem(themeStorageKey, theme);
+  const toggleElements = Array.from(document.querySelectorAll('.theme-toggle, .theme-toggle-button'));
+  toggleElements.forEach((toggle) => {
+    toggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+    toggle.setAttribute('aria-label', theme === 'dark' ? 'Activer mode clair' : 'Activer mode sombre');
+  });
+}
+function initTheme() {
+  const stored = localStorage.getItem(themeStorageKey);
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = stored === 'light' || stored === 'dark' ? stored : (prefersDark ? 'dark' : 'light');
+  applyTheme(theme);
+}
+initTheme();
+const themeToggleButtons = Array.from(document.querySelectorAll('.theme-toggle, .theme-toggle-button'));
+themeToggleButtons.forEach((button) => {
+  button.addEventListener('click', () => {
+    applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark');
+  });
+});
 </script>
 </body>
 </html>

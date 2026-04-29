@@ -176,12 +176,31 @@ export class PublicFormLogsService {
   /**
    * Distinct public_token values with count + last received timestamp.
    * Used by the admin landing page to render the event list.
+   *
+   * Optional filters:
+   *  - tokenSearch: ILIKE on publicToken (case-insensitive substring)
+   *  - from / to:   restrict on log createdAt window before grouping
+   *                 (= "events that received logs in [from, to]")
    */
-  async listEventGroups(): Promise<
-    Array<{ publicToken: string; count: number; lastReceivedAt: Date }>
-  > {
+  async listEventGroups(filters?: {
+    tokenSearch?: string;
+    from?: Date;
+    to?: Date;
+  }): Promise<Array<{ publicToken: string; count: number; lastReceivedAt: Date }>> {
+    const where: Record<string, unknown> = {};
+    if (filters?.tokenSearch && filters.tokenSearch.trim()) {
+      where.publicToken = { contains: filters.tokenSearch.trim(), mode: 'insensitive' };
+    }
+    if (filters?.from || filters?.to) {
+      const range: Record<string, Date> = {};
+      if (filters.from) range.gte = filters.from;
+      if (filters.to) range.lte = filters.to;
+      where.createdAt = range;
+    }
+
     const groups = await this.prisma.publicFormLog.groupBy({
       by: ['publicToken'],
+      where: Object.keys(where).length ? (where as never) : undefined,
       _count: { _all: true },
       _max: { createdAt: true },
       orderBy: { _max: { createdAt: 'desc' } },
@@ -224,38 +243,48 @@ export class PublicFormLogsService {
       return { items, total };
     }
 
-    // Search implementation: we use a raw query that matches the search term
-    // against the payload's name/firstname/email-like keys (case-insensitive).
-    // Variants intentionally mirror common EN/FR variations.
+    // Search implementation: full-text-ish over the entire payload + UTM
+    // metadata. We use a raw query to fetch the matching IDs (with the actual
+    // snake_case table/column names from @@map), then re-hydrate via Prisma
+    // so the returned objects have proper camelCase fields.
     const term = `%${search.trim().replace(/[%_]/g, '\\$&')}%`;
-    const variants = [
-      'first_name','firstname','prenom','prénom','givenname','given_name',
-      'last_name','lastname','nom','familyname','family_name','surname',
-      'email','e_mail','e-mail','mail','courriel','emailaddress','email_address',
-    ];
-    const orConditions = variants
-      .map((k) => `("formPayload" ->> '${k}') ILIKE $2`)
-      .join(' OR ');
-
-    // Two queries: items + total. Keep it readable, no separate CTE.
-    const itemsRaw = await this.prisma.$queryRawUnsafe<PublicFormLog[]>(
-      `SELECT * FROM "PublicFormLog"
-       WHERE "publicToken" = $1
-         AND (${orConditions})
-       ORDER BY "createdAt" DESC
-       OFFSET ${skip} LIMIT ${pageSize}`,
+    const idsRaw = await this.prisma.$queryRawUnsafe<Array<{ id: string }>>(
+      `SELECT id FROM public_form_logs
+        WHERE public_token = $1
+          AND (
+                form_payload::text ILIKE $2
+             OR coalesce(utm_source,   '') ILIKE $2
+             OR coalesce(utm_medium,   '') ILIKE $2
+             OR coalesce(utm_campaign, '') ILIKE $2
+          )
+        ORDER BY created_at DESC
+        OFFSET ${skip} LIMIT ${pageSize}`,
       publicToken,
       term,
     );
     const totalRaw = await this.prisma.$queryRawUnsafe<Array<{ count: bigint }>>(
-      `SELECT COUNT(*)::bigint AS count FROM "PublicFormLog"
-       WHERE "publicToken" = $1
-         AND (${orConditions})`,
+      `SELECT COUNT(*)::bigint AS count FROM public_form_logs
+        WHERE public_token = $1
+          AND (
+                form_payload::text ILIKE $2
+             OR coalesce(utm_source,   '') ILIKE $2
+             OR coalesce(utm_medium,   '') ILIKE $2
+             OR coalesce(utm_campaign, '') ILIKE $2
+          )`,
       publicToken,
       term,
     );
     const total = Number(totalRaw[0]?.count ?? 0);
-    return { items: itemsRaw, total };
+    if (idsRaw.length === 0) return { items: [], total };
+
+    const ids = idsRaw.map((r) => r.id);
+    const found = await this.prisma.publicFormLog.findMany({
+      where: { id: { in: ids } },
+    });
+    // Preserve the order returned by the raw query (DESC by created_at).
+    const byId = new Map(found.map((f) => [f.id, f] as const));
+    const items = ids.map((id) => byId.get(id)).filter((x): x is PublicFormLog => Boolean(x));
+    return { items, total };
   }
 
   /**

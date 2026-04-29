@@ -32,10 +32,10 @@ export class AttendeeApiClient {
 
   constructor(@Inject(APP_CONFIG) private readonly config: AppConfig) {}
 
-  async getEventInfo(publicToken: string): Promise<AttendeeEventInfo> {
+  async getEventInfo(publicToken: string, opts?: { forceRefresh?: boolean }): Promise<AttendeeEventInfo> {
     const now = Date.now();
     const cached = this.cache.get(publicToken);
-    if (cached && cached.expiresAt > now) {
+    if (!opts?.forceRefresh && cached && cached.expiresAt > now) {
       return cached.value;
     }
 
@@ -48,9 +48,12 @@ export class AttendeeApiClient {
   }
 
   /** Resolves multiple tokens in parallel, deduplicated. */
-  async getMany(publicTokens: string[]): Promise<Map<string, AttendeeEventInfo>> {
+  async getMany(
+    publicTokens: string[],
+    opts?: { forceRefresh?: boolean },
+  ): Promise<Map<string, AttendeeEventInfo>> {
     const unique = Array.from(new Set(publicTokens));
-    const results = await Promise.all(unique.map((t) => this.getEventInfo(t)));
+    const results = await Promise.all(unique.map((t) => this.getEventInfo(t, opts)));
     const map = new Map<string, AttendeeEventInfo>();
     results.forEach((info, i) => map.set(unique[i], info));
     return map;

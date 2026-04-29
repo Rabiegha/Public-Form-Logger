@@ -4,9 +4,10 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Login · Public Form Logger</title>
-<link rel="stylesheet" href="/admin/style.css" />
+<link rel="stylesheet" href="<%= typeof basePath !== 'undefined' ? basePath : '' %>/admin/style.css" />
 </head>
 <body class="centered">
+<script>window.__BASE_PATH__ = <%- JSON.stringify(typeof basePath !== 'undefined' ? basePath : '') %>;</script>
 <div class="login-card">
   <h1>Public Form Logger</h1>
   <p class="muted">Admin login</p>
@@ -19,13 +20,31 @@
   <div class="alert error hidden" id="err"></div>
 </div>
 <script>
+const themeStorageKey = 'pfl-theme';
+function applyTheme(theme) {
+  const body = document.body;
+  if (theme === 'light') {
+    body.classList.add('light');
+    body.classList.remove('dark');
+  } else {
+    body.classList.add('dark');
+    body.classList.remove('light');
+  }
+}
+(function initLoginTheme() {
+  const stored = localStorage.getItem(themeStorageKey);
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const theme = stored === 'light' || stored === 'dark' ? stored : (prefersDark ? 'dark' : 'light');
+  applyTheme(theme);
+})();
+
 document.getElementById('login-form').addEventListener('submit', async (e) => {
   e.preventDefault();
   const form = e.target;
   const errBox = document.getElementById('err');
   errBox.classList.add('hidden');
   try {
-    const res = await fetch('/admin/auth/login', {
+    const res = await fetch((window.__BASE_PATH__ || '') + '/admin/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'same-origin',
@@ -40,7 +59,7 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
       errBox.classList.remove('hidden');
       return;
     }
-    window.location.href = '/admin/dashboard';
+    window.location.href = (window.__BASE_PATH__ || '') + '/admin/dashboard';
   } catch (err) {
     errBox.textContent = 'Network error';
     errBox.classList.remove('hidden');

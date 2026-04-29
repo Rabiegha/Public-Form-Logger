@@ -1,0 +1,52 @@
+# =============================================================================
+# Public Form Logger — Production stack
+# =============================================================================
+# - Joins the EXISTING `ems-network` so `ems-nginx` can proxy_pass to
+#   http://public-form-logger-api:4001/logger/...
+# - Reads secrets from .env.vps (NOT committed).
+# - Postgres data lives in a dedicated volume (no overlap with Attendee DB).
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: public-form-logger-postgres
+    restart: unless-stopped
+    env_file:
+      - .env.vps
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - logger_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ems-network
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: public-form-logger-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env.vps
+    networks:
+      - ems-network
+    # No host port published — only reachable via ems-nginx through the network.
+
+volumes:
+  logger_postgres_data:
+    name: public_form_logger_postgres_data
+
+networks:
+  ems-network:
+    external: true
+    name: ems-network
