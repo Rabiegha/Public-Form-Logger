@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+build/
+
+# Env
+.env
+.env.docker
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Prisma
+# (generated client lives in node_modules)
+
+# Test
+coverage/
+.nyc_output/
+
+# Temp / archives (ignored content but keep folders via .gitkeep)
+temp/*
+!temp/.gitkeep
+archives/*
+!archives/.gitkeep

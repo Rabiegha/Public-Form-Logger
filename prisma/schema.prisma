@@ -1,0 +1,48 @@
+// Prisma schema — Public Form Logger
+// Independent service: do NOT share schema with Attendee.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Raw copy of a public landing-page form submission.
+/// This is a SAFETY NET — payload is stored verbatim and never altered.
+model PublicFormLog {
+  id              String   @id @default(uuid()) @db.Uuid
+  publicToken     String   @map("public_token")
+  /// Idempotency key from frontend. NULL means "no dedup" (legacy landing pages).
+  submissionId    String?  @unique @map("submission_id")
+  formPayload     Json     @map("form_payload")
+  formPayloadSize Int      @map("form_payload_size")
+  landingPageUrl  String?  @map("landing_page_url")
+  referer         String?  @map("referer")
+  userAgent       String?  @map("user_agent")
+  ipAddress       String?  @map("ip_address")
+  utmSource       String?  @map("utm_source")
+  utmMedium       String?  @map("utm_medium")
+  utmCampaign     String?  @map("utm_campaign")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([publicToken])
+  @@index([createdAt])
+  @@index([publicToken, createdAt(sort: Desc)])
+  @@map("public_form_logs")
+}
+
+/// Local admin user for the panel. Single-tenant in V1.
+model AdminUser {
+  id           String   @id @default(uuid()) @db.Uuid
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         String   @default("admin")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("admin_users")
+}

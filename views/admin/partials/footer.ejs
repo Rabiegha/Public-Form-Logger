@@ -1,0 +1,13 @@
+</main>
+<script>
+async function doLogout(e) {
+  e.preventDefault();
+  try {
+    await fetch('/admin/auth/logout', { method: 'POST', credentials: 'same-origin' });
+  } catch (_) { /* ignore */ }
+  window.location.href = '/admin/login';
+  return false;
+}
+</script>
+</body>
+</html>

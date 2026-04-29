@@ -1,0 +1,40 @@
+<% const title = 'Log detail'; %>
+<%- include('partials/header', { title, user }) %>
+
+<a href="/admin/dashboard" class="link-btn">← Back to dashboard</a>
+
+<h2>Log <span class="mono small"><%= log.id %></span></h2>
+
+<dl class="meta">
+  <dt>Created</dt><dd class="mono"><%= new Date(log.createdAt).toISOString() %></dd>
+  <dt>public_token</dt><dd class="mono"><%= log.publicToken %></dd>
+  <dt>submission_id</dt><dd class="mono"><%= log.submissionId || '—' %></dd>
+  <dt>Payload size</dt><dd><%= log.formPayloadSize %> B</dd>
+  <dt>Landing page URL</dt><dd class="break"><%= log.landingPageUrl || '—' %></dd>
+  <dt>Referer</dt><dd class="break"><%= log.referer || '—' %></dd>
+  <dt>User-Agent</dt><dd class="break small"><%= log.userAgent || '—' %></dd>
+  <dt>IP address</dt><dd class="mono"><%= log.ipAddress || '—' %></dd>
+  <dt>UTM source</dt><dd><%= log.utmSource || '—' %></dd>
+  <dt>UTM medium</dt><dd><%= log.utmMedium || '—' %></dd>
+  <dt>UTM campaign</dt><dd><%= log.utmCampaign || '—' %></dd>
+</dl>
+
+<div class="payload-header">
+  <h3>form_payload</h3>
+  <button type="button" id="copy-btn" class="link-btn">Copy JSON</button>
+</div>
+<pre id="payload"><%= payloadJson %></pre>
+
+<script>
+document.getElementById('copy-btn').addEventListener('click', async () => {
+  const txt = document.getElementById('payload').textContent;
+  try {
+    await navigator.clipboard.writeText(txt);
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = 'Copied ✓';
+    setTimeout(() => (btn.textContent = 'Copy JSON'), 1500);
+  } catch (e) { /* ignore */ }
+});
+</script>
+
+<%- include('partials/footer') %>

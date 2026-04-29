@@ -1,0 +1,63 @@
+<% const title = 'Dashboard'; %>
+<%- include('partials/header', { title, user }) %>
+
+<section class="stats">
+  <div class="stat"><div class="stat-label">Last 24h</div><div class="stat-value"><%= stats.last24h %></div></div>
+  <div class="stat"><div class="stat-label">Last 7 days</div><div class="stat-value"><%= stats.last7d %></div></div>
+  <div class="stat"><div class="stat-label">Last received</div>
+    <div class="stat-value small">
+      <%= stats.lastReceivedAt ? new Date(stats.lastReceivedAt).toISOString() : '—' %>
+    </div>
+  </div>
+</section>
+
+<form method="GET" action="/admin/dashboard" class="filters">
+  <input type="text" name="publicToken" placeholder="public_token" value="<%= filters.publicToken %>" />
+  <input type="text" name="submissionId" placeholder="submission_id" value="<%= filters.submissionId %>" />
+  <input type="date" name="from" value="<%= filters.from %>" />
+  <input type="date" name="to" value="<%= filters.to %>" />
+  <button type="submit">Filter</button>
+  <a href="/admin/dashboard" class="link-btn">Reset</a>
+</form>
+
+<table class="logs">
+  <thead>
+    <tr>
+      <th>Created</th>
+      <th>public_token</th>
+      <th>submission_id</th>
+      <th>Size</th>
+      <th>UTM</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% if (items.length === 0) { %>
+      <tr><td colspan="6" class="muted center">No logs found</td></tr>
+    <% } %>
+    <% items.forEach((item) => { %>
+      <tr>
+        <td class="mono"><%= new Date(item.createdAt).toISOString() %></td>
+        <td class="mono"><%= item.publicToken %></td>
+        <td class="mono small"><%= item.submissionId || '—' %></td>
+        <td><%= item.formPayloadSize %> B</td>
+        <td class="small">
+          <%= [item.utmSource, item.utmMedium, item.utmCampaign].filter(Boolean).join(' / ') || '—' %>
+        </td>
+        <td><a href="/admin/logs/<%= item.id %>">View</a></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<nav class="pagination">
+  <span class="muted"><%= total %> total · page <%= page %> / <%= totalPages %></span>
+  <% if (page > 1) { %>
+    <a href="?page=<%= page - 1 %>&publicToken=<%= encodeURIComponent(filters.publicToken) %>&submissionId=<%= encodeURIComponent(filters.submissionId) %>&from=<%= filters.from %>&to=<%= filters.to %>">Prev</a>
+  <% } %>
+  <% if (page < totalPages) { %>
+    <a href="?page=<%= page + 1 %>&publicToken=<%= encodeURIComponent(filters.publicToken) %>&submissionId=<%= encodeURIComponent(filters.submissionId) %>&from=<%= filters.from %>&to=<%= filters.to %>">Next</a>
+  <% } %>
+</nav>
+
+<%- include('partials/footer') %>
