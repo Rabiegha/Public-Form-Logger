@@ -108,7 +108,7 @@
     params.set('page', String(p));
     params.set('pageSize', String(pageSize));
     if (search) params.set('search', search);
-    return '<%- basePath %>/admin/events/' + encodeURIComponent(event.publicToken) + '?' + params.toString();
+    return basePath + '/admin/events/' + encodeURIComponent(event.publicToken) + '?' + params.toString();
   }
 %>
 <%- include('partials/pagination', { page, totalPages, total, pageSize, buildUrl }) %>
