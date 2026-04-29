@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Inscription — Démo Prod</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --border: #e2e8f0;
+      --error: #dc2626;
+      --success: #16a34a;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text);
+    }
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      max-width: 620px;
+      width: 100%;
+      padding: 40px;
+    }
+    .card-header { text-align: center; margin-bottom: 32px; }
+    .card-header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 700; }
+    .card-header p { margin: 0; color: var(--muted); font-size: 15px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .field input:focus,
+    .field select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .checkbox-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    .honeypot {
+      position: absolute;
+      left: -9999px;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+    button[type=submit] {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 8px;
+    }
+    button[type=submit]:hover { background: var(--primary-hover); }
+    button[type=submit]:disabled { opacity: 0.6; cursor: not-allowed; }
+    .feedback {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 14px;
+      display: none;
+    }
+    .feedback.success { background: #dcfce7; color: var(--success); display: block; }
+    .feedback.error { background: #fee2e2; color: var(--error); display: block; }
+    .results {
+      margin-top: 20px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #f8fafc;
+      padding: 18px;
+    }
+    .results h2 { margin: 0 0 12px; font-size: 16px; }
+    .result-block { margin-bottom: 16px; }
+    .result-label { display: block; margin-bottom: 6px; font-weight: 700; }
+    .result-pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 13px;
+      padding: 10px;
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      color: #111827;
+    }
+    .footer { margin-top: 24px; text-align: center; font-size: 12px; color: var(--muted); }
+    .footer code { background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-size: 11px; }
+    .hidden { display: none; }
+    @media (max-width: 600px) {
+      .row { grid-template-columns: 1fr; }
+      .card { padding: 28px 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <header class="card-header">
+      <h1>Landing page prod</h1>
+      <p>Envoi simultané vers l'API Attendee et l'API Logger de production.</p>
+    </header>
+
+    <form id="signup-form" novalidate>
+      <div class="row">
+        <div class="field">
+          <label for="firstName">Prénom <span class="required">*</span></label>
+          <input id="firstName" name="firstName" type="text" required autocomplete="given-name" />
+        </div>
+        <div class="field">
+          <label for="lastName">Nom <span class="required">*</span></label>
+          <input id="lastName" name="lastName" type="text" required autocomplete="family-name" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="email">Email <span class="required">*</span></label>
+        <input id="email" name="email" type="email" required autocomplete="email" />
+      </div>
+
+      <div class="field">
+        <label for="phone">Téléphone</label>
+        <input id="phone" name="phone" type="tel" autocomplete="tel" />
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="company">Société</label>
+          <input id="company" name="company" type="text" autocomplete="organization" />
+        </div>
+        <div class="field">
+          <label for="jobTitle">Poste</label>
+          <input id="jobTitle" name="jobTitle" type="text" autocomplete="organization-title" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="token">Public token (event)</label>
+        <input id="token" name="publicToken" type="text" value="96be0d69-bfaf-4e34-9255-f5a0bbeee5ec" />
+      </div>
+
+      <div class="field">
+        <label for="attendanceType">Type de participation</label>
+        <select id="attendanceType" name="attendanceType">
+          <option value="onsite" selected>En présentiel</option>
+          <option value="online">En ligne</option>
+          <option value="hybrid">Hybride</option>
+        </select>
+      </div>
+
+      <div class="checkbox-row">
+        <label><input type="checkbox" id="sendAttendee" checked /> Envoyer vers Attendee</label>
+        <label><input type="checkbox" id="sendLogger" checked /> Envoyer vers Logger</label>
+      </div>
+
+      <div class="honeypot" aria-hidden="true">
+        <label for="website">Ne pas remplir</label>
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <button type="submit" id="submit-btn">Je m'inscris</button>
+      <div id="feedback" class="feedback" role="status"></div>
+    </form>
+
+    <div id="results" class="results hidden">
+      <h2>Résultats</h2>
+      <div class="result-block">
+        <span class="result-label">Attendee</span>
+        <div id="attendee-result" class="result-pre"></div>
+      </div>
+      <div class="result-block">
+        <span class="result-label">Logger</span>
+        <div id="logger-result" class="result-pre"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Production API URLs :</p>
+      <p><code>https://api.attendee.fr/api/public/events/:publicToken/register</code></p>
+      <p><code>https://api.attendee.fr/logger/v1/public-form-logs</code></p>
+    </div>
+  </main>
+
+  <script>
+  (function () {
+    'use strict';
+
+    const CONFIG = {
+      apiBaseUrlAttendee: 'https://api.attendee.fr/api/public/events',
+      apiBaseUrlLogger: 'https://api.attendee.fr/logger/v1/public-form-logs',
+      publicToken: '96be0d69-bfaf-4e34-9255-f5a0bbeee5ec',
+      maxRetries: 3,
+      backoffMs: 500,
+    };
+
+    function uuidv4() {
+      if (window.crypto && window.crypto.randomUUID) return window.crypto.randomUUID();
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    }
+
+    function extractUtm() {
+      const params = new URLSearchParams(window.location.search);
+      return {
+        utm_source: params.get('utm_source') || undefined,
+        utm_medium: params.get('utm_medium') || undefined,
+        utm_campaign: params.get('utm_campaign') || undefined,
+      };
+    }
+
+    function collectPayload(form) {
+      const payload = {};
+      form.querySelectorAll('input[name]').forEach(function (input) {
+        if (input.closest('.honeypot')) return;
+        const value = (input.value || '').trim();
+        if (!value) return;
+        const name = input.name;
+        if (name === 'firstName') payload.first_name = value;
+        else if (name === 'lastName') payload.last_name = value;
+        else if (name === 'jobTitle') payload.job_title = value;
+        else if (name === 'publicToken') payload.publicToken = value;
+        else payload[name] = value;
+      });
+      return payload;
+    }
+
+    async function postWithRetry(url, body, attempt) {
+      attempt = attempt || 0;
+      try {
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify(body),
+        });
+
+        if (res.status === 503 && attempt < CONFIG.maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, CONFIG.backoffMs * Math.pow(2, attempt)));
+          return postWithRetry(url, body, attempt + 1);
+        }
+        return res;
+      } catch (err) {
+        if (attempt < CONFIG.maxRetries) {
+          await new Promise((resolve) => setTimeout(resolve, CONFIG.backoffMs * Math.pow(2, attempt)));
+          return postWithRetry(url, body, attempt + 1);
+        }
+        throw err;
+      }
+    }
+
+    function showFeedback(type, message) {
+      const feedback = document.getElementById('feedback');
+      feedback.className = 'feedback ' + type;
+      feedback.textContent = message;
+    }
+
+    function showResults(attendeeText, loggerText) {
+      const results = document.getElementById('results');
+      results.classList.remove('hidden');
+      document.getElementById('attendee-result').textContent = attendeeText;
+      document.getElementById('logger-result').textContent = loggerText;
+    }
+
+    async function submitToAttendee(token, body) {
+      const url = `${CONFIG.apiBaseUrlAttendee}/${encodeURIComponent(token)}/register`;
+      const res = await postWithRetry(url, body);
+      const text = await res.text().catch(() => 'Réponse vide');
+      return `status=${res.status}\n${text}`;
+    }
+
+    async function submitToLogger(body) {
+      const url = CONFIG.apiBaseUrlLogger;
+      const res = await postWithRetry(url, body);
+      const text = await res.text().catch(() => 'Réponse vide');
+      return `status=${res.status}\n${text}`;
+    }
+
+    const form = document.getElementById('signup-form');
+    const submitBtn = document.getElementById('submit-btn');
+
+    form.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      showFeedback('', '');
+      document.getElementById('results').classList.add('hidden');
+
+      if (form.querySelector('.honeypot input').value.trim()) {
+        showFeedback('success', 'Merci, votre inscription a bien été enregistrée.');
+        form.reset();
+        return;
+      }
+
+      const payload = collectPayload(form);
+      if (!payload.first_name || !payload.last_name || !payload.email) {
+        showFeedback('error', 'Merci de remplir les champs obligatoires.');
+        return;
+      }
+
+      const attendeeToken = payload.publicToken || CONFIG.publicToken;
+      if (!attendeeToken) {
+        showFeedback('error', 'Merci de renseigner le public token de l’événement.');
+        return;
+      }
+
+      const attendanceType = document.getElementById('attendanceType').value;
+      const sendAttendee = document.getElementById('sendAttendee').checked;
+      const sendLogger = document.getElementById('sendLogger').checked;
+      const utm = extractUtm();
+      const submissionId = uuidv4();
+
+      const attendeeBody = {
+        attendee: {
+          email: payload.email,
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          phone: payload.phone,
+          company: payload.company,
+          job_title: payload.job_title,
+        },
+        attendance_type: attendanceType,
+        source: 'public_form',
+        submission_id: submissionId,
+        ...utm,
+      };
+
+      const loggerBody = {
+        public_token: attendeeToken,
+        submission_id: submissionId,
+        form_payload: {
+          firstName: payload.first_name,
+          lastName: payload.last_name,
+          email: payload.email,
+          phone: payload.phone,
+          company: payload.company,
+          jobTitle: payload.job_title,
+        },
+        landing_page_url: window.location.href,
+        ...utm,
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Envoi…';
+
+      try {
+        let attendeeResult = 'skipped';
+        let loggerResult = 'skipped';
+
+        if (sendAttendee) {
+          attendeeResult = await submitToAttendee(attendeeToken, attendeeBody);
+        }
+        if (sendLogger) {
+          loggerResult = await submitToLogger(loggerBody);
+        }
+
+        showResults(attendeeResult, loggerResult);
+        if ((sendAttendee && attendeeResult.startsWith('status=201')) || (sendLogger && loggerResult.startsWith('status=201'))) {
+          showFeedback('success', 'Envoi terminé. Vérifiez les réponses ci-dessous.');
+          form.reset();
+        } else {
+          showFeedback('error', 'Une ou plusieurs requêtes ont échoué. Vérifiez les résultats.');
+        }
+      } catch (err) {
+        showFeedback('error', 'Erreur réseau ou serveur. Réessayez plus tard.');
+        showResults(err.message || String(err), '');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Je m\'inscris';
+      }
+    });
+  })();
+  </script>
+</body>
+</html>

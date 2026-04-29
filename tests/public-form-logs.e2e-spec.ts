@@ -18,7 +18,8 @@ describe('Public Form Logger (e2e)', () => {
 
   beforeAll(async () => {
     process.env.NODE_ENV = 'test';
-    process.env.JWT_SECRET = process.env.JWT_SECRET ?? 'test-secret-please-change-and-make-it-long-32+chars';
+    process.env.JWT_SECRET =
+      process.env.JWT_SECRET ?? 'test-secret-please-change-and-make-it-long-32+chars';
     process.env.CORS_ORIGINS = process.env.CORS_ORIGINS ?? 'http://localhost:3000';
 
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -44,7 +45,11 @@ describe('Public Form Logger (e2e)', () => {
     await prisma.publicFormLog.deleteMany();
     await prisma.adminUser.deleteMany({ where: { email: adminEmail } });
     await prisma.adminUser.create({
-      data: { email: adminEmail, passwordHash: await bcrypt.hash(adminPassword, 10), role: 'admin' },
+      data: {
+        email: adminEmail,
+        passwordHash: await bcrypt.hash(adminPassword, 10),
+        role: 'admin',
+      },
     });
   });
 
@@ -75,18 +80,13 @@ describe('Public Form Logger (e2e)', () => {
 
     it('empty form_payload → 400', async () => {
       const body = { ...validBody(), form_payload: {} };
-      await request(app.getHttpServer())
-        .post('/v1/public-form-logs')
-        .send(body)
-        .expect(400);
+      await request(app.getHttpServer()).post('/v1/public-form-logs').send(body).expect(400);
     });
 
     it('missing public_token → 400', async () => {
-      const { public_token: _, ...body } = validBody();
-      await request(app.getHttpServer())
-        .post('/v1/public-form-logs')
-        .send(body)
-        .expect(400);
+      const { public_token: _pt, ...body } = validBody();
+      void _pt;
+      await request(app.getHttpServer()).post('/v1/public-form-logs').send(body).expect(400);
     });
 
     it('duplicate submission_id → 200 duplicate', async () => {
@@ -121,7 +121,7 @@ describe('Public Form Logger (e2e)', () => {
     it('invalid credentials → 401', async () => {
       await request(app.getHttpServer())
         .post('/admin/auth/login')
-        .send({ email: adminEmail, password: 'wrong-password' })
+        .send({ email: adminEmail, password: 'wrong' })
         .expect(401);
     });
   });
